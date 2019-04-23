@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="1.60.9" />
+    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.24" />
+    <PackageReference Include="FewBox.Core.Utility" Version="1.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FewBox.Service.Auth.Model\FewBox.Service.Auth.Model.csproj" />
+  </ItemGroup>
+
+</Project>
