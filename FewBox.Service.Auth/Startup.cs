@@ -1,12 +1,20 @@
-﻿using System;
+﻿using AutoMapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FewBox.Core.Persistence.Orm;
 using FewBox.Core.Web.Config;
+using FewBox.Core.Web.Filter;
+using FewBox.Core.Web.Orm;
 using FewBox.Core.Web.Security;
 using FewBox.Core.Web.Token;
 using FewBox.Service.Auth.Domain;
+using FewBox.Service.Auth.ExceptionHandler;
+using FewBox.Service.Auth.Model.Repositories;
+using FewBox.Service.Auth.Model.Services;
+using FewBox.Service.Auth.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -37,13 +45,32 @@ namespace FewBox.Service.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddCors();
+            services.AddAutoMapper();
+            services.AddMemoryCache();
             services.AddRouting(options => options.LowercaseUrls = true);
             var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
             services.AddSingleton(jwtConfig);
             services.AddScoped<ITokenService, JWTToken>();
             services.AddSingleton<IAuthorizationHandler, RemoteRoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RemoteRoleAuthorizationPolicyProvider>();
-            services.AddSingleton<IRemoteAuthenticationService, LocalAuthenticationService>();
+            services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
+            services.AddScoped<IRemoteAuthenticationService, LocalAuthenticationService>();
+            services.AddScoped<IOrmSession, MySqlSession>();
+            services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
+            services.AddScoped<IPrincipalRepository, PrincipalRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IGroupRepository, GroupRepository>();
+            services.AddScoped<ISecurityObjectRepository, SecurityObjectRepository>();
+            services.AddScoped<IApiRepository, ApiRepository>();
+            services.AddScoped<IModuleRepository, ModuleRepository>();
+            services.AddScoped<IPrincipal_RoleRepository, Principal_RoleRepository>();
+            services.AddScoped<IRole_SecurityObjectRepository, Role_SecurityObjectRepository>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IGroup_UserRepository, Group_UserRepository>();
+            services.AddScoped<IModuleService, ModuleService>();
+            services.AddScoped<ILDAPService, LDAPService>();
+            services.AddSingleton<IExceptionHandler, ConsoleExceptionHandler>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>(); 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

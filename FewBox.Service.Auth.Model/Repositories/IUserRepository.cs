@@ -7,7 +7,7 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface IUserRepository : IBaseRepository<User, Guid>
     {
-        bool IsPasswordValid(string username, string password);
+        bool IsPasswordValid(string username, string password, out Guid userId);
         bool IsPasswordValid(Guid userId, string password);
         User FindOneByUsername(string username, UserType userType);
         User FindOneByUsername(string username);

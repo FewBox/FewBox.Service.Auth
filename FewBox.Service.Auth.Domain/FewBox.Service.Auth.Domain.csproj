@@ -5,7 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FewBox.Core.Web" Version="1.0.28" />
+    <PackageReference Include="FewBox.Core.Web" Version="1.0.32" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FewBox.Service.Auth.Model\FewBox.Service.Auth.Model.csproj" />
+    <ProjectReference Include="..\FewBox.Service.Auth.Repository\FewBox.Service.Auth.Repository.csproj" />
   </ItemGroup>
 
 </Project>

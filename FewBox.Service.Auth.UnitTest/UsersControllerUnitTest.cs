@@ -3,10 +3,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace FewBox.Service.Auth.UnitTest
 {
     [TestClass]
-    public class UnitTest1
+    public class UsersControllerUnitTest
     {
         [TestMethod]
-        public void TestMethod1()
+        public void TestGetMethod()
         {
         }
     }

@@ -75,12 +75,13 @@ namespace FewBox.Service.Auth.Repository
             return this.UnitOfWork.Connection.ExecuteScalar<int>(String.Format(@"select count(1) from {0} where Email=@Email", this.TableName), new { Email = email }) > 0;
         }
 
-        public bool IsPasswordValid(string username, string password)
+        public bool IsPasswordValid(string username, string password, out Guid userId)
         {
             bool isPasswordValid = false;
             var user = this.FindOneByUsername(username);
             if (user != null)
             {
+                userId = user.Id;
                 isPasswordValid = user.SaltMD5Password == SaltMD5Utility.Encrypt(password, user.Salt.ToString());
             }
             return isPasswordValid;
