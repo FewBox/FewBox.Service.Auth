@@ -8,10 +8,12 @@ using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class Group_UsersController : MapperController
     {
         private IGroup_UserRepository Group_UserRepository { get; set; }

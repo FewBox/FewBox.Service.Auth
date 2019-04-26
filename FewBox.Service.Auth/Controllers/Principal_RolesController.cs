@@ -9,10 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class Principal_RolesController : MapperController
     {
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }

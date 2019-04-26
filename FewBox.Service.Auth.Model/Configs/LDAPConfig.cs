@@ -1,6 +1,6 @@
 ﻿namespace FewBox.Service.Auth.Model.Configs
 {
-    public class LDAPConfiguration
+    public class LDAPConfig
     {
         public string Host { get; set; }
         public int Port { get; set; }

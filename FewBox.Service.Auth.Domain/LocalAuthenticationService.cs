@@ -26,13 +26,16 @@ namespace FewBox.Service.Auth.Domain
         {
             var roles = new List<string>();
             var api = this.ApiRepository.FindOneByControllerAndAction(controller, action);
-            var role_SecurityObjects = this.Role_SecurityObjectRepository.FindAllBySecurityId(api.SecurityObjectId);
-            if(role_SecurityObjects != null)
+            if(api!=null)
             {
-                foreach(var role_SecurityObject in role_SecurityObjects)
+                var role_SecurityObjects = this.Role_SecurityObjectRepository.FindAllBySecurityId(api.SecurityObjectId);
+                if(role_SecurityObjects != null)
                 {
-                    var role = this.RoleRepository.FindOne(role_SecurityObject.RoleId);
-                    roles.Add(role.Code);
+                    foreach(var role_SecurityObject in role_SecurityObjects)
+                    {
+                        var role = this.RoleRepository.FindOne(role_SecurityObject.RoleId);
+                        roles.Add(role.Code);
+                    }
                 }
             }
             return roles;

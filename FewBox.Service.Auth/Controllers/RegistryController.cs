@@ -7,10 +7,12 @@ using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class RegistryController : MapperController
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
@@ -29,7 +31,7 @@ namespace FewBox.Service.Auth.Controllers
         [HttpPost]
         [Transaction]
         [IgnoreAuthentication]
-        public PayloadResponseDto<Guid> PostAsync([FromBody]UserRegistryRequestDto userRegistryRequestDto)
+        public PayloadResponseDto<Guid> Post([FromBody]UserRegistryRequestDto userRegistryRequestDto)
         {
             // Todo
             if (userRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")

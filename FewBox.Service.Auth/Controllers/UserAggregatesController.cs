@@ -5,10 +5,12 @@ using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Web.Controller;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class UserAggregatesController : MapperController
     {
         private IUserRepository UserRepository { get; set; }

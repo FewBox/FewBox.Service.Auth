@@ -29,6 +29,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.SwaggerGeneration.Processors.Security;
+using FewBox.Service.Auth.Model.Configs;
 
 namespace FewBox.Service.Auth
 {
@@ -51,11 +52,13 @@ namespace FewBox.Service.Auth
             services.AddRouting(options => options.LowercaseUrls = true);
             var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
             services.AddSingleton(jwtConfig);
+            var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
+            services.AddSingleton(apiConfig);
             services.AddScoped<ITokenService, JWTToken>();
-            services.AddSingleton<IAuthorizationHandler, RoleHandler>();
+            services.AddScoped<IAuthorizationHandler, RoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
-            services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
             services.AddScoped<IAuthenticationService, LocalAuthenticationService>();
+            services.AddScoped<IOrmConfiguration, AppSettingOrmConfiguration>();
             services.AddScoped<IOrmSession, MySqlSession>();
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
             services.AddScoped<IPrincipalRepository, PrincipalRepository>();
@@ -70,7 +73,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<IGroup_UserRepository, Group_UserRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
-            services.AddSingleton<IExceptionHandler, ConsoleExceptionHandler>();
+            services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>(); 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -79,7 +82,7 @@ namespace FewBox.Service.Auth
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidateAudience = true,
+                    ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtConfig.Issuer,

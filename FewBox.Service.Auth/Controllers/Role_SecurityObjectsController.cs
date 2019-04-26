@@ -10,10 +10,12 @@ using FewBox.Core.Web.Controller;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class Role_SecurityObjectsController : MapperController
     {
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository {get;set;}
@@ -47,7 +49,7 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost("GrantPermission")]
         [Transaction]
-        public PayloadResponseDto<Guid> GrantPermission([FromBody] RoleBindingDto roleBindingDto)
+        public PayloadResponseDto<Guid> Post([FromBody] RoleBindingDto roleBindingDto)
         {
             var roleBinding = new Role_SecurityObject { SecurityObjectId = roleBindingDto.SecurityObjectId, RoleId = roleBindingDto.RoleId };
             Guid role_securityId = this.Role_SecurityObjectRepository.Save(roleBinding);
@@ -58,7 +60,7 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto RemovePermission(Guid id)
+        public MetaResponseDto Delete(Guid id)
         {
             this.Role_SecurityObjectRepository.Recycle(id);
             return new MetaResponseDto();
