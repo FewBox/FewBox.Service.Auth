@@ -9,11 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using FewBox.Core.Web.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [RemoteRoleAuthorize(Policy="RemoteRole_WithHeader")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class ApisController : MapperController
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }

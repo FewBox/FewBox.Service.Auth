@@ -52,10 +52,10 @@ namespace FewBox.Service.Auth
             var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
             services.AddSingleton(jwtConfig);
             services.AddScoped<ITokenService, JWTToken>();
-            services.AddSingleton<IAuthorizationHandler, RemoteRoleHandler>();
-            services.AddSingleton<IAuthorizationPolicyProvider, RemoteRoleAuthorizationPolicyProvider>();
+            services.AddSingleton<IAuthorizationHandler, RoleHandler>();
+            services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
             services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
-            services.AddScoped<IRemoteAuthenticationService, LocalAuthenticationService>();
+            services.AddScoped<IAuthenticationService, LocalAuthenticationService>();
             services.AddScoped<IOrmSession, MySqlSession>();
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
             services.AddScoped<IPrincipalRepository, PrincipalRepository>();

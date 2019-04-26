@@ -8,11 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using FewBox.Core.Web.Security;
 using FewBox.Core.Web.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [RemoteRoleAuthorize(Policy="RemoteRole_Pure")]
+    [Authorize(Policy="JWTRole_ControllerAction")]
     public class AppController : MapperController
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
