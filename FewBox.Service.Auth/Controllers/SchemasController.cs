@@ -15,7 +15,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
-    public class AppController : MapperController
+    public class SchemasController : MapperController
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
@@ -29,7 +29,7 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
 
-        public AppController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
+        public SchemasController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
@@ -79,12 +79,6 @@ namespace FewBox.Service.Auth.Controllers
             }
             this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
             return new MetaResponseDto {};
-        }
-
-        [HttpGet("exception")]
-        public void ThrowException()
-        {
-            throw new Exception("FewBox Exception");
         }
 
         private void InitApi(string controller, string[] actions, Guid roleId)

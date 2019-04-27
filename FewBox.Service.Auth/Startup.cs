@@ -30,6 +30,7 @@ using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.SwaggerGeneration.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
+using Microsoft.AspNetCore.Routing;
 
 namespace FewBox.Service.Auth
 {
@@ -46,6 +47,9 @@ namespace FewBox.Service.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.Configure<RouteOptions>(options=>{
+                options.LowercaseUrls=true;
+            });
             services.AddCors();
             services.AddAutoMapper();
             services.AddMemoryCache();

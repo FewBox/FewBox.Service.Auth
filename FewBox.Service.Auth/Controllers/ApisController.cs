@@ -38,8 +38,8 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("Search/{keyword}")]
-        public PayloadResponseDto<IEnumerable<ApiDto>> GetByKeyword(string keyword)
+        [HttpGet("search")]
+        public PayloadResponseDto<IEnumerable<ApiDto>> Get(string keyword)
         {
             return new PayloadResponseDto<IEnumerable<ApiDto>>
             {
@@ -47,7 +47,7 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("Paging/{pageRange}/{pageIndex}")]
+        [HttpGet("paging")]
         public PayloadResponseDto<PagingDto<ApiDto>> Get(int pageIndex = 1, int pageRange = 5)
         {
             return new PayloadResponseDto<PagingDto<ApiDto>>

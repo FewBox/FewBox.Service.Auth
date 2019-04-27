@@ -17,10 +17,12 @@ namespace FewBox.Service.Auth.Controllers
     public class RolesController : MapperController
     {
         private IRoleRepository RoleRepository { get; set; }
+        private IGroupRepository GroupRepository { get; set; }
 
-        public RolesController(IRoleRepository roleRepository, IMapper mapper) : base(mapper)
+        public RolesController(IRoleRepository roleRepository, IGroupRepository groupRepository, IMapper mapper) : base(mapper)
         {
             this.RoleRepository = roleRepository;
+            this.GroupRepository = groupRepository;
         }
 
         [HttpGet]
@@ -29,6 +31,15 @@ namespace FewBox.Service.Auth.Controllers
             return new PayloadResponseDto<IEnumerable<RoleDto>>
             {
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAll())
+            };
+        }
+
+        [HttpGet("{roleCode}/groups/count")]
+        public PayloadResponseDto<int> GetGroupCount(string roleCode)
+        {
+            return new PayloadResponseDto<int>
+            {
+                Payload = this.GroupRepository.CountByRoleCode(roleCode)
             };
         }
 
