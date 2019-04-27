@@ -143,13 +143,13 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost("{id}/users/{userId}")]
         [Transaction]
-        public PayloadResponseDto<Guid> Put(Guid id, Guid userId)
+        public PayloadResponseDto<int> Put(Guid id, Guid userId)
         {
             var group_User = new Group_User{ GroupId=id, UserId=userId };
             group_User.Id = id;
-            Guid mappingId = this.Group_UserRepository.Save(group_User);
-            return new PayloadResponseDto<Guid>{
-                Payload = mappingId
+            int effect = this.Group_UserRepository.Update(group_User);
+            return new PayloadResponseDto<int>{
+                Payload = effect
             };
         }
 
