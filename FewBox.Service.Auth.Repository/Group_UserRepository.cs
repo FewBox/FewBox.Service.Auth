@@ -16,7 +16,17 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Group_User> FindAllByUserId(Guid userId)
         {
-            return this.UnitOfWork.Connection.Query<Group_User>(String.Format(@"select * from {0} where UserId=@UserId", this.TableName), new { UserId = userId });
+            return this.UnitOfWork.Connection.Query<Group_User>($"select * from {this.TableName} where UserId=@UserId", new { UserId = userId });
+        }
+
+        public Group_User FindOneByGroupIdAndUserId(Guid groupId, Guid userId)
+        {
+            return this.UnitOfWork.Connection.QueryFirstOrDefault($"select * from {this.TableName} where GroupId=@GroupId and UserId=@UserId", new { UserId = userId, GroupId = groupId });
+        }
+
+        public bool IsExist(Guid groupId, Guid userId)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(Id) from {this.TableName} where GroupId=@Groupid and UserId=@UserId", new { UserId = userId, GroupId = groupId }) > 0;
         }
 
         protected override string GetSaveSegmentSql()

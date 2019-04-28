@@ -18,8 +18,8 @@ namespace FewBox.Service.Auth.Controllers
     {
         private IRoleRepository RoleRepository { get; set; }
         private IGroupRepository GroupRepository { get; set; }
-
-        public RolesController(IRoleRepository roleRepository, IGroupRepository groupRepository, IMapper mapper) : base(mapper)
+        public RolesController(IRoleRepository roleRepository, IGroupRepository groupRepository,
+        IMapper mapper) : base(mapper)
         {
             this.RoleRepository = roleRepository;
             this.GroupRepository = groupRepository;
@@ -34,56 +34,12 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("{roleCode}/groups/count")]
+        [HttpGet("seek/{roleCode}/groups/count")]
         public PayloadResponseDto<int> GetGroupCount(string roleCode)
         {
             return new PayloadResponseDto<int>
             {
                 Payload = this.GroupRepository.CountByRoleCode(roleCode)
-            };
-        }
-
-        [HttpGet("api/{apiId}")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> GetByApiId(Guid apiId)
-        {
-            return new PayloadResponseDto<IEnumerable<RoleDto>> {
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByApiId(apiId))
-            };
-        }
-
-        [HttpGet("module/{moduleId}")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> GetByModuleId(Guid moduleId)
-        {
-            return new PayloadResponseDto<IEnumerable<RoleDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(moduleId))
-            };
-        }
-
-        [HttpGet("user/{userId}")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> GetByUserId(Guid userId)
-        {
-            return new PayloadResponseDto<IEnumerable<RoleDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByUserId(userId))
-            };
-        }
-
-        [HttpGet("permission/{permissionId}")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> GetByPermissionId(Guid permissionId)
-        {
-            return new PayloadResponseDto<IEnumerable<RoleDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByPermissionId(permissionId))
-            };
-        }
-
-        [HttpGet("group/{groupId}")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> GetByGroupId(Guid groupId)
-        {
-            return new PayloadResponseDto<IEnumerable<RoleDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByGroupId(groupId))
             };
         }
 
@@ -139,7 +95,7 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [HttpGet("count")]
-        public PayloadResponseDto<int> GetTotalNumber()
+        public PayloadResponseDto<int> Count()
         {
             return new PayloadResponseDto<int>
             {

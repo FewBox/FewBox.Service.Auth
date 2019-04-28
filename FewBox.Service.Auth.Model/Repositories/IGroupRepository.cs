@@ -9,5 +9,6 @@ namespace FewBox.Service.Auth.Model.Repositories
     {
         IEnumerable<Group> FindAllByRoot();
         int CountByRoleCode(string roleCode);
+        int UpdateParent(Guid id, Guid parentId);
     }
 }

@@ -20,26 +20,28 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
-        private ILDAPService LDAPService { get; set; }
+        private IGroup_UserRepository Group_UserRepository { get; set; }
+        private IRoleRepository RoleRepository { get; set; }
 
         public UsersController(IUserRepository userRepository, IPrincipalRepository principalRepository, 
-            IPrincipal_RoleRepository principal_RoleRepository, ILDAPService ldapService, IMapper mapper): base(mapper)
+            IPrincipal_RoleRepository principal_RoleRepository, IGroup_UserRepository group_UserRepository,
+            IRoleRepository roleRepository, IMapper mapper): base(mapper)
         {
             this.UserRepository = userRepository;
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
-            this.LDAPService = ldapService;
+            this.Group_UserRepository = group_UserRepository;
+            this.RoleRepository = roleRepository;
         }
 
-        [HttpGet("search/{keyword}")]
-        public PayloadResponseDto<IEnumerable<UserDto>> GetByKeyword(string keyword)
+        [HttpGet("count")]
+        public PayloadResponseDto<int> Count()
         {
-            return new PayloadResponseDto<IEnumerable<UserDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.UserRepository.FindAllByKeyword(keyword))
+            return new PayloadResponseDto<int> {
+                Payload = this.UserRepository.Count()
             };
         }
-
+  
         [HttpGet]
         public PayloadResponseDto<IEnumerable<UserDto>> Get()
         {
@@ -49,7 +51,16 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("paging/{pageRange}/{pageIndex}")]
+        [HttpGet("search/{keyword}")]
+        public PayloadResponseDto<IEnumerable<UserDto>> Get(string keyword)
+        {
+            return new PayloadResponseDto<IEnumerable<UserDto>>
+            {
+                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.UserRepository.FindAllByKeyword(keyword))
+            };
+        }
+
+        [HttpGet("paging/{pageIndex}/{pageRange}")]
         public PayloadResponseDto<PagingDto<UserDto>> Get(int pageIndex = 1, int pageRange = 5)
         {
             return new PayloadResponseDto<PagingDto<UserDto>>
@@ -71,8 +82,8 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("ids")]
-        public PayloadResponseDto<IEnumerable<UserProfileDto>> GetByIds(Guid[] ids)
+        [HttpGet("batchsearch")]
+        public PayloadResponseDto<IEnumerable<UserProfileDto>> Get([FromQuery] Guid[] ids)
         {
             return new PayloadResponseDto<IEnumerable<UserProfileDto>> {
                 Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserProfileDto>>(this.UserRepository.FindAllByIds(ids))
@@ -134,30 +145,6 @@ namespace FewBox.Service.Auth.Controllers
             return new MetaResponseDto();
         }
 
-        [HttpPut("sync/{id}")]
-        [Transaction]
-        public MetaResponseDto Sync(Guid id)
-        {
-            this.LDAPService.SyncUserProfile(id);
-            return new MetaResponseDto();
-        }
-
-        [HttpPut("syncall")]
-        [Transaction]
-        public MetaResponseDto SyncAll()
-        {
-            this.LDAPService.SyncAllUserProfiles();
-            return new MetaResponseDto();
-        }
-
-        [HttpPut("resetpassword/{id}")]
-        [Transaction]
-        public MetaResponseDto ResetPassword(Guid id, [FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
-        {
-            this.UserRepository.ResetPassword(id, resetPasswordRequestDto.Password);
-            return new MetaResponseDto { };
-        }
-
         [HttpDelete("{id}")]
         [Transaction]
         public MetaResponseDto Delete(Guid id)
@@ -168,19 +155,83 @@ namespace FewBox.Service.Auth.Controllers
             return new MetaResponseDto();
         }
 
-        [HttpGet("count")]
-        public PayloadResponseDto<int> GetTotalNumber()
+        [HttpPut("{id}/resetpassword")]
+        [Transaction]
+        public MetaResponseDto ResetPassword(Guid id, [FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
         {
-            return new PayloadResponseDto<int> {
-                Payload = this.UserRepository.Count()
+            this.UserRepository.ResetPassword(id, resetPasswordRequestDto.Password);
+            return new MetaResponseDto { };
+        }
+
+        [HttpPost("{id}/groups/{groupId}")]
+        [Transaction]
+        public PayloadResponseDto<int> AddGroup(Guid id, Guid groupId)
+        {
+            int effect = 0;
+            if(!this.Group_UserRepository.IsExist(groupId, id))
+            {
+                var group_User = new Group_User{ GroupId=id, UserId= id };
+                group_User.Id = id;
+                effect = this.Group_UserRepository.Update(group_User);
+            }
+            return new PayloadResponseDto<int>{
+                Payload = effect
             };
         }
 
-        [HttpGet("count/rolecode/{roleCode}")]
-        public PayloadResponseDto<int> GetTotalNumberByRoleCode(string roleCode)
+        [HttpDelete("{id}/groups/{groupId}")]
+        [Transaction]
+        public PayloadResponseDto<int> RemoveGroup(Guid id, Guid groupId)
         {
-            return new PayloadResponseDto<int> {
-                Payload = this.UserRepository.CountByRoleCode(roleCode)
+            int effect = 0;
+            var group_User = this.Group_UserRepository.FindOneByGroupIdAndUserId(groupId, id);
+            if(group_User != null)
+            {
+                effect = this.Group_UserRepository.Delete(group_User.Id);
+            }
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
+        }
+
+        [HttpPut("{id}/roles/{roleId}")]
+        [Transaction]
+        public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
+        {
+            Guid newId = Guid.Empty;
+            var user = this.UserRepository.FindOne(id);
+            if(!this.Principal_RoleRepository.IsExist(user.PrincipalId, roleId))
+            {
+                var principal_Role = new Principal_Role { PrincipalId = user.PrincipalId, RoleId = roleId };
+                newId = this.Principal_RoleRepository.Save(principal_Role);
+            }
+            return new PayloadResponseDto<Guid>{
+                Payload = newId
+            };
+        }
+
+        [HttpDelete("{id}/roles/{roleId}")]
+        [Transaction]
+        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
+        {
+            int effect = 0;
+            var user = this.UserRepository.FindOne(id);
+            var principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(user.PrincipalId, roleId);
+            if(principal_Role != null)
+            {
+                effect = this.Principal_RoleRepository.Delete(principal_Role.Id);
+            }
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
+        }
+        
+        [HttpGet("{id}/roles")]
+        public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
+        {
+            return new PayloadResponseDto<IEnumerable<RoleDto>>
+            {
+                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByUserId(id))
             };
         }
     }

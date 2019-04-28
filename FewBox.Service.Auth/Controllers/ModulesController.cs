@@ -21,14 +21,17 @@ namespace FewBox.Service.Auth.Controllers
         private IModuleRepository ModuleRepository { get; set; }
         private IModuleService ModuleService { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
+        private IRoleRepository RoleRepository { get; set; }
 
         public ModulesController(IModuleRepository moduleRepository, ISecurityObjectRepository securityObjectRepository,
-            IModuleService moduleService, IRole_SecurityObjectRepository role_SecurityObjectRepository, IMapper mapper) : base(mapper)
+        IModuleService moduleService, IRole_SecurityObjectRepository role_SecurityObjectRepository,
+        IRoleRepository roleRepository, IMapper mapper) : base(mapper)
         {
             this.ModuleRepository = moduleRepository;
             this.SecurityObjectRepository = securityObjectRepository;
             this.ModuleService = moduleService;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
+            this.RoleRepository = roleRepository;
         }
 
         [HttpGet]
@@ -41,7 +44,7 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [HttpGet("root")]
-        public PayloadResponseDto<IEnumerable<ModuleDto>> GetByRoot()
+        public PayloadResponseDto<IEnumerable<ModuleDto>> GetRoot()
         {
             var modules = new List<ModuleDto>();
             var rootModules = this.ModuleRepository.FindAllByRoot();
@@ -56,7 +59,16 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("Paging/{pageRange}/{pageIndex}")]
+        [HttpGet("count")]
+        public PayloadResponseDto<int> Count()
+        {
+            return new PayloadResponseDto<int>
+            {
+                Payload = this.ModuleRepository.Count()
+            };
+        }
+
+        [HttpGet("paging/{pageIndex}/{pageRange}")]
         public PayloadResponseDto<PagingDto<ModuleDto>> Get(int pageIndex = 1, int pageRange = 5)
         {
             return new PayloadResponseDto<PagingDto<ModuleDto>>
@@ -139,21 +151,36 @@ namespace FewBox.Service.Auth.Controllers
             return new MetaResponseDto();
         }
 
-        [HttpGet("count")]
-        public PayloadResponseDto<int> GetTotalNumber()
+        [HttpPut("{id}/roles/{roleId}")]
+        [Transaction]
+        public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
         {
-            return new PayloadResponseDto<int>
+            Guid newId = Guid.Empty;
+            var module = this.ModuleRepository.FindOne(id);
+            if(!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId))
             {
-                Payload = this.ModuleRepository.Count()
+                var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = module.SecurityObjectId };
+                newId = this.Role_SecurityObjectRepository.Save(role_SecurityObject);
+            }
+            return new PayloadResponseDto<Guid>{
+                Payload = newId
             };
         }
 
-        [HttpPut("changeparent")]
+        [HttpDelete("{id}/roles/{roleId}")]
         [Transaction]
-        public MetaResponseDto ChangeParent([FromBody]ChangeModuleParentRequestDto changeModuleParentRequestDto)
+        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
         {
-            this.ModuleRepository.ChangeModuleParentId(changeModuleParentRequestDto.ParentId, changeModuleParentRequestDto.SourceIds);
-            return new MetaResponseDto { };
+            int effect = 0;
+            var module = this.ModuleRepository.FindOne(id);
+            var role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(roleId, module.SecurityObjectId);
+            if(role_SecurityObject != null)
+            {
+                effect = this.Role_SecurityObjectRepository.Delete(role_SecurityObject.Id);
+            }
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
         }
 
         [HttpPut("batchgrantrole")]
@@ -181,6 +208,35 @@ namespace FewBox.Service.Auth.Controllers
                 }
             }
             return new MetaResponseDto { };
+        }
+
+        [HttpPost("{id}/modules/{parentId}")]
+        [Transaction]
+        public PayloadResponseDto<int> ChangeParent(Guid id, Guid parentId)
+        {
+            int effect = 0;
+            effect = this.ModuleRepository.UpdateParent(id, parentId);
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
+        }
+        
+        [HttpGet("seek/{moduleKey}/roles")]
+        public PayloadResponseDto<IEnumerable<RoleDto>> Get(string moduleKey)
+        {
+            var module = this.ModuleRepository.FindOneByKey(moduleKey);
+            return new PayloadResponseDto<IEnumerable<RoleDto>>{
+                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(module.Id))
+            };
+        }
+
+        [HttpGet("{id}/roles")]
+        public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
+        {
+            return new PayloadResponseDto<IEnumerable<RoleDto>>
+            {
+                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(id))
+            };
         }
     }
 }

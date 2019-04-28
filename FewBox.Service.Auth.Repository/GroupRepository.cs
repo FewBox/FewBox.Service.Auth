@@ -17,34 +17,39 @@ namespace FewBox.Service.Auth.Repository
 
         public new Group FindOne(Guid id)
         {
-            return this.UnitOfWork.Connection.Query<Group, Principal, Group>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id having {0}.Id = @Id", this.TableName),
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having {this.TableName}.Id = @Id",
                 (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; },
                 new { Id = id }).SingleOrDefault();
         }
 
         public new IEnumerable<Group> FindAll()
         {
-            return this.UnitOfWork.Connection.Query<Group, Principal, Group>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id", this.TableName),
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id",
                 (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; });
         }
 
         public IEnumerable<Group> FindAllByRoot()
         {
-            return this.UnitOfWork.Connection.Query<Group, Principal, Group>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id having {0}.PrincipalId='00000000-0000-0000-0000-000000000000'", this.TableName),
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having {this.TableName}.PrincipalId='00000000-0000-0000-0000-000000000000'",
                 (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; });
         }
 
         public new IEnumerable<Group> FindAll(int pageIndex, int pageRange)
         {
             int from = (pageIndex - 1) * pageRange;
-            return this.UnitOfWork.Connection.Query<Group, Principal, Group>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id limit @From,@PageRange", this.TableName),
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id limit @From,@PageRange",
                 (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; },
                 new { From = from, PageRange = pageRange });
         }
 
+        public int UpdateParent(Guid id, Guid parentId)
+        {
+            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ParentId=@ParentId where Id=@Id", new { ParentId = parentId, Id = id });
+        }
+
         public int CountByRoleCode(string roleCode)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>(String.Format(@"select count(1) from principal_role where RoleId in (select Id from role where Code=@RoleCode) and PrincipalId in (select Id from principal where PrincipalType=1)", this.TableName),
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from principal_role where RoleId in (select Id from role where Code=@RoleCode) and PrincipalId in (select Id from principal where PrincipalType=1)",
                 new { RoleCode = roleCode });
         }
 

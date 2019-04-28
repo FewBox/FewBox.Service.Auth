@@ -17,7 +17,6 @@ namespace FewBox.Service.Auth.AutoMapperProfiles
 
             CreateMap<User, UserDto>();
             CreateMap<User, UserProfileDto>();
-            CreateMap<User, UserAggregateDto>();
             CreateMap<UserPersistantDto, User>();
             CreateMap<UserPersistantDto, Principal>()
                 .ForMember("PrincipalType",opt => opt.Ignore());
@@ -35,13 +34,6 @@ namespace FewBox.Service.Auth.AutoMapperProfiles
 
             CreateMap<Role, RoleDto>();
             CreateMap<RolePersistantDto, Role>();
-
-            CreateMap<Role_SecurityObject, RoleBindingDto>();
-            CreateMap<RoleBindingPersistantDto, Role_SecurityObject>();
-
-            CreateMap<Principal_Role, Principal_RoleDto>();
-            CreateMap<Principal_RolePersistantDto, Principal_Role>();
-
         }
     }
 }

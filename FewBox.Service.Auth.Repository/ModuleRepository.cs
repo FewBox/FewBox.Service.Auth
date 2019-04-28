@@ -17,27 +17,27 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Module> FindAllByParent(Guid parentId)
         {
-            return this.UnitOfWork.Connection.Query<Module>(String.Format(@"select m.*,so.Name,so.Description from {0} m left join securityobject so on m.SecurityObjectId = so.Id where m.ParentId = @ParentId", this.TableName), new { ParentId = parentId });
+            return this.UnitOfWork.Connection.Query<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.ParentId = @ParentId", new { ParentId = parentId });
         }
 
         public IEnumerable<Module> FindAllByRoot()
         {
-            return this.UnitOfWork.Connection.Query<Module>(String.Format(@"select m.*,so.Name,so.Description from {0} m left join securityobject so on m.SecurityObjectId = so.Id where m.ParentId = '00000000-0000-0000-0000-000000000000' or m.ParentId is null", this.TableName));
+            return this.UnitOfWork.Connection.Query<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.ParentId = '00000000-0000-0000-0000-000000000000' or m.ParentId is null");
         }
 
         public Module FindOneByKey(string key)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>(String.Format(@"select m.*,so.Name,so.Description from {0} m left join securityobject so on m.SecurityObjectId = so.Id where m.`Key` = @Key", this.TableName), new { Key = key });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.`Key` = @Key", new { Key = key });
         }
 
         public new Module FindOne(Guid id)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>(String.Format(@"select m.*,so.Name,so.Description from {0} m left join securityobject so on m.SecurityObjectId = so.Id where m.Id = @Id", this.TableName), new { Id = id });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.Id = @Id", new { Id = id });
         }
 
         public void ChangeModuleParentId(Guid parentId, IList<Guid> sourceIds)
         {
-            this.UnitOfWork.Connection.Execute(String.Format(@"update {0} set ParentId=@ParentId where Id in @SourceIds", this.TableName), new { ParentId = parentId, SourceIds = sourceIds.ToArray() });
+            this.UnitOfWork.Connection.Execute($"update {this.TableName} set ParentId=@ParentId where Id in @SourceIds", new { ParentId = parentId, SourceIds = sourceIds.ToArray() });
         }
 
         protected override string GetSaveSegmentSql()
@@ -53,6 +53,11 @@ namespace FewBox.Service.Auth.Repository
         protected override string GetUpdateWithUniqueKeyWhereSegmentSql()
         {
             throw new System.NotImplementedException();
+        }
+
+        public int UpdateParent(Guid id, Guid parentId)
+        {
+            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ParentId=@ParentId where Id=@Id", new { ParentId = parentId, Id = id });
         }
     }
 }

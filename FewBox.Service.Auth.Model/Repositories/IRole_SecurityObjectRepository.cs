@@ -9,5 +9,7 @@ namespace FewBox.Service.Auth.Model.Repositories
     {
         IEnumerable<Role_SecurityObject> FindAllBySecurityId(Guid securityObjectId);
         void DeleteBySecurityId(Guid securityObjectId);
+        Role_SecurityObject FindOneByRoleIdAndSecurityObjectId(Guid roleId, Guid securityObjectId);
+        bool IsExist(Guid roleId, Guid securityObjectId);
     }
 }

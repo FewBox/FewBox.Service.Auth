@@ -17,17 +17,27 @@ namespace FewBox.Service.Auth.Repository
 
         public void DeleteByPrincipalId(Guid principalId)
         {
-            this.UnitOfWork.Connection.Query<Principal_Role>(String.Format(@"delete from {0} where PrincipalId=@PrincipalId", this.TableName), new { PrincipalId = principalId });
+            this.UnitOfWork.Connection.Query<Principal_Role>($"delete from {this.TableName} where PrincipalId=@PrincipalId", new { PrincipalId = principalId });
         }
 
         public IEnumerable<Principal_Role> FindAllByPrincipalId(Guid principalId)
         {
-            return this.UnitOfWork.Connection.Query<Principal_Role>(String.Format(@"select * from {0} where PrincipalId=@PrincipalId", this.TableName), new { PrincipalId = principalId });
+            return this.UnitOfWork.Connection.Query<Principal_Role>($"select * from {this.TableName} where PrincipalId=@PrincipalId", new { PrincipalId = principalId });
         }
 
         public IEnumerable<Principal_Role> FindAllByPrincipalIds(IList<Guid> principalIds)
         {
-            return this.UnitOfWork.Connection.Query<Principal_Role>(String.Format(@"select * from {0} where PrincipalId in @PincipalIds", this.TableName), new { PincipalIds = principalIds });
+            return this.UnitOfWork.Connection.Query<Principal_Role>($"select * from {this.TableName} where PrincipalId in @PincipalIds", new { PincipalIds = principalIds });
+        }
+
+        public Principal_Role FindOneByPrincipalIdAndRoleId(Guid principalId, Guid roleId)
+        {
+            return this.UnitOfWork.Connection.QueryFirstOrDefault<Principal_Role>($"select * from {this.TableName} where PrincipalId=@PrincipalId and RoleId=@RoleId", new { PrincipalId =  principalId, RoleId = roleId });
+        }
+
+        public bool IsExist(Guid principalId, Guid roleId)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(Id) from {this.TableName} where PrincipalId=@PrincipalId and RoleId=@RoleId", new { PrincipalId =  principalId, RoleId = roleId }) > 0;
         }
 
         protected override string GetSaveSegmentSql()

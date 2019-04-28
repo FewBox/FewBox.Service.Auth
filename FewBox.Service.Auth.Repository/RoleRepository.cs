@@ -16,32 +16,27 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Role> FindAllByApiId(Guid apiId)
         {
-            return this.UnitOfWork.Connection.Query<Role>(String.Format(@"select * from {0} where Id in (select RoleId from role_security where SecurityObjectId in (select SecurityObjectId from api where Id=@ApiId))", this.TableName), new { ApiId = apiId });
+            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from role_security where SecurityObjectId in (select SecurityObjectId from api where Id=@ApiId))", new { ApiId = apiId });
         }
 
         public IEnumerable<Role> FindAllByModuleId(Guid moduleId)
         {
-            return this.UnitOfWork.Connection.Query<Role>(String.Format(@"select * from {0} where Id in (select RoleId from role_security where SecurityObjectId in (select SecurityObjectId from module where Id=@ModuleId))", this.TableName), new { ModuleId = moduleId });
+            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from role_security where SecurityObjectId in (select SecurityObjectId from module where Id=@ModuleId))", new { ModuleId = moduleId });
         }
 
         public IEnumerable<Role> FindAllByGroupId(Guid groupId)
         {
-            return this.UnitOfWork.Connection.Query<Role>(String.Format(@"select * from {0} where Id in (select RoleId from principal_role where PrincipalId in (select PrincipalId from `group` where Id=@GroupId))", this.TableName), new { GroupId = groupId });
-        }
-
-        public IEnumerable<Role> FindAllByPermissionId(Guid permissionId)
-        {
-            return this.UnitOfWork.Connection.Query<Role>(String.Format(@"select * from {0} where Id in (select RoleId from role_permission where PermissionId in (select PermissionId from permission where Id=@PermissionId))", this.TableName), new { PermissionId = permissionId });
+            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from principal_role where PrincipalId in (select PrincipalId from `group` where Id=@GroupId))", new { GroupId = groupId });
         }
 
         public IEnumerable<Role> FindAllByUserId(Guid userId)
         {
-            return this.UnitOfWork.Connection.Query<Role>(String.Format(@"select * from {0} where Id in (select RoleId from principal_role where PrincipalId in (select PrincipalId from user where Id=@UserId))", this.TableName), new { UserId = userId });
+            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from principal_role where PrincipalId in (select PrincipalId from user where Id=@UserId))", new { UserId = userId });
         }
 
         public Role FindOneByCode(string code)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Role>(String.Format(@"select * from {0} where Code=@Code", this.TableName), new { Code = code });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Role>($"select * from {this.TableName} where Code=@Code", new { Code = code });
         }
 
         protected override string GetSaveSegmentSql()

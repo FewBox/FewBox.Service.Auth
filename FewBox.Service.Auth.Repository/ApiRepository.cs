@@ -16,12 +16,12 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Api> FindAllByKeyword(string keyword)
         {
-            return this.UnitOfWork.Connection.Query<Api>(String.Format(@"select * from {0} where Controller like @Controller", this.TableName), new { Controller = "%" + keyword + "%"});
+            return this.UnitOfWork.Connection.Query<Api>($"select * from {this.TableName} where Controller like @Controller", new { Controller = "%" + keyword + "%"});
         }
 
         public Api FindOneByControllerAndAction(string controller, string action)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Api>(String.Format(@"select * from {0} where Controller=@Controller and Action=@Action", this.TableName), 
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Api>($"select * from {this.TableName} where Controller=@Controller and Action=@Action", 
                 new { Controller = controller, Action = action });
         }
 

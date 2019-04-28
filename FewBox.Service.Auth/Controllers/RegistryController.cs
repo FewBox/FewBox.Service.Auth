@@ -28,9 +28,9 @@ namespace FewBox.Service.Auth.Controllers
             this.Principal_RoleRepository = principal_RoleRepository;
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [Transaction]
-        [IgnoreAuthentication]
         public PayloadResponseDto<Guid> Post([FromBody]UserRegistryRequestDto userRegistryRequestDto)
         {
             // Todo

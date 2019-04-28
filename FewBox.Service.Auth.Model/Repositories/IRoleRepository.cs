@@ -12,6 +12,5 @@ namespace FewBox.Service.Auth.Model.Repositories
         IEnumerable<Role> FindAllByModuleId(Guid moduleId);
         IEnumerable<Role> FindAllByUserId(Guid userId);
         IEnumerable<Role> FindAllByGroupId(Guid groupId);
-        IEnumerable<Role> FindAllByPermissionId(Guid permissionId);
     }
 }

@@ -18,42 +18,42 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<User> FindAllByKeyword(string keyword)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id where principal.Name like @Name", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id where principal.Name like @Name",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Name = "%" + keyword + "%" });
         }
 
         public new User FindOne(Guid id)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id having {0}.Id = @Id", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having {this.TableName}.Id = @Id",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Id = id }).SingleOrDefault();
         }
 
         public new IEnumerable<User> FindAll()
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id", this.TableName), 
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; });
         }
 
         public new IEnumerable<User> FindAll(int pageIndex, int pageRange)
         {
             int from = (pageIndex - 1) * pageRange;
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id limit @From,@PageRange", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id limit @From,@PageRange",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { From = from, PageRange = pageRange });
         }
 
         public IEnumerable<User> FindAllByIds(Guid[] ids)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id where {0}.Id in @Ids ", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id where {this.TableName}.Id in @Ids ",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Ids = ids });
         }
 
         public User FindOneByUsername(string username, UserType userType)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id  having {0}.Type = @Type and PrincipalId in (select Id from principal where Name = @Name)", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id  having {this.TableName}.Type = @Type and PrincipalId in (select Id from principal where Name = @Name)",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Name = username, Type = userType }).SingleOrDefault();
         }
@@ -65,14 +65,14 @@ namespace FewBox.Service.Auth.Repository
 
         public User FindOneByPrincipalId(Guid principalId)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id where PrincipalId = (select Id from principal where PrincipalId = @PrincipalId)", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id where PrincipalId = (select Id from principal where PrincipalId = @PrincipalId)",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { PrincipalId = principalId }).SingleOrDefault();
         }
 
         public bool IsExist(string email)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>(String.Format(@"select count(1) from {0} where Email=@Email", this.TableName), new { Email = email }) > 0;
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Email=@Email", new { Email = email }) > 0;
         }
 
         public bool IsPasswordValid(string username, string password, out Guid userId)
@@ -102,7 +102,7 @@ namespace FewBox.Service.Auth.Repository
         {
             Guid salt = Guid.NewGuid();
             string saltMD5Password = SaltMD5Utility.Encrypt(password, salt.ToString());
-            this.UnitOfWork.Connection.Execute(String.Format(@"update {0} set SaltMD5Password=@SaltMD5Password,Salt=@Salt where Email=@Email", this.TableName),
+            this.UnitOfWork.Connection.Execute($"update {this.TableName} set SaltMD5Password=@SaltMD5Password,Salt=@Salt where Email=@Email",
                 new { SaltMD5Password = saltMD5Password, Salt = salt, Email = email });
         }
 
@@ -110,7 +110,7 @@ namespace FewBox.Service.Auth.Repository
         {
             Guid salt = Guid.NewGuid();
             string saltMD5Password = SaltMD5Utility.Encrypt(password, salt.ToString());
-            this.UnitOfWork.Connection.Execute(String.Format(@"update {0} set SaltMD5Password=@SaltMD5Password,Salt=@Salt where Id=@Id", this.TableName),
+            this.UnitOfWork.Connection.Execute($"update {this.TableName} set SaltMD5Password=@SaltMD5Password,Salt=@Salt where Id=@Id",
                 new { SaltMD5Password = saltMD5Password, Salt = salt, Id = id });
         }
 
@@ -121,16 +121,15 @@ namespace FewBox.Service.Auth.Repository
             user.SaltMD5Password = SaltMD5Utility.Encrypt(password, user.Salt.ToString());
             this.InitUpdateDefaultProperty(user);
             var newSegments = from column in this.GetSaveSegmentSql().Split(',')
-                              select String.Format(@"@{0}", column.Trim());
-            string sql = String.Format(@"insert into {0} ({1} Salt, SaltMD5Password, Id, CreatedTime, ModifiedTime, CreatedBy, ModifiedBy) values({2}, @Salt, @SaltMD5Password, @Id, @CreatedTime, @ModifiedTime, @CreatedBy, @ModifiedBy)",
-                this.TableName, this.GetSaveSegmentSql() + ",", String.Join(",", newSegments));
+                              select $"@{column.Trim()}";
+            string sql = $"insert into {this.TableName} ({this.GetSaveSegmentSql()}, Salt, SaltMD5Password, Id, CreatedTime, ModifiedTime, CreatedBy, ModifiedBy) values({String.Join(",", newSegments)}, @Salt, @SaltMD5Password, @Id, @CreatedTime, @ModifiedTime, @CreatedBy, @ModifiedBy)";
             this.UnitOfWork.Connection.Execute(sql, user);
             return user.Id;
         }
 
         public int CountByRoleCode(string roleCode)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>(String.Format(@"select count(1) from principal_role where RoleId in (select Id from role where Code=@RoleCode) and PrincipalId in (select Id from principal where PrincipalType=0)", this.TableName),
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from principal_role where RoleId in (select Id from role where Code=@RoleCode) and PrincipalId in (select Id from principal where PrincipalType=0)",
                 new { RoleCode = roleCode });
         }
 
@@ -151,7 +150,7 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<User> FindAllByType(UserType userType)
         {
-            return this.UnitOfWork.Connection.Query<User, Principal, User>(String.Format(@"select * from {0} left join principal on {0}.PrincipalId = principal.Id where {0}.Type = @Type ", this.TableName),
+            return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id where {this.TableName}.Type = @Type ",
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Type = userType });
         }

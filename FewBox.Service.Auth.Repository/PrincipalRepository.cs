@@ -15,7 +15,7 @@ namespace FewBox.Service.Auth.Repository
 
         public bool IsExist(string name)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>(String.Format(@"select count(1) from {0} where Name = @Name", this.TableName),
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name",
                 new { Name = name }) > 0;
         }
 

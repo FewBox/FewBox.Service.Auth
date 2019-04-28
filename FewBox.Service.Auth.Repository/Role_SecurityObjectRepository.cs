@@ -16,12 +16,22 @@ namespace FewBox.Service.Auth.Repository
 
         public void DeleteBySecurityId(Guid securityObjectId)
         {
-            this.UnitOfWork.Connection.Query<Role_SecurityObject>(String.Format(@"delete from {0} where SecurityObjectId=@SecurityObjectId", this.TableName), new { SecurityObjectId = securityObjectId });
+            this.UnitOfWork.Connection.Query<Role_SecurityObject>($"delete from {this.TableName} where SecurityObjectId=@SecurityObjectId", new { SecurityObjectId = securityObjectId });
         }
 
         public IEnumerable<Role_SecurityObject> FindAllBySecurityId(Guid securityObjectId)
         {
-            return this.UnitOfWork.Connection.Query<Role_SecurityObject>(String.Format(@"select * from {0} where SecurityObjectId=@SecurityObjectId", this.TableName), new { SecurityObjectId = securityObjectId });
+            return this.UnitOfWork.Connection.Query<Role_SecurityObject>($"select * from {this.TableName} where SecurityObjectId=@SecurityObjectId", new { SecurityObjectId = securityObjectId });
+        }
+
+        public Role_SecurityObject FindOneByRoleIdAndSecurityObjectId(Guid roleId, Guid securityObjectId)
+        {
+            return this.UnitOfWork.Connection.QueryFirstOrDefault<Role_SecurityObject>($"select * from {this.TableName} where RoleId=@RoleId and SecurityObjectId=@SecurityObjectId", new { RoleId = roleId, SecurityObjectId = securityObjectId});
+        }
+
+        public bool IsExist(Guid roleId, Guid securityObjectId)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(Id) from {this.TableName} where RoleId=@RoleId and SecurityObjectId=@SecurityObjectId", new { RoleId = roleId, SecurityObjectId = securityObjectId}) > 0;
         }
 
         protected override string GetSaveSegmentSql()

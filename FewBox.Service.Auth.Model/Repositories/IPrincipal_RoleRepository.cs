@@ -10,5 +10,7 @@ namespace FewBox.Service.Auth.Model.Repositories
         IEnumerable<Principal_Role> FindAllByPrincipalId(Guid principalId);
         IEnumerable<Principal_Role> FindAllByPrincipalIds(IList<Guid> principalIds);
         void DeleteByPrincipalId(Guid principalId);
+        Principal_Role FindOneByPrincipalIdAndRoleId(Guid principalId, Guid roleId);
+        bool IsExist(Guid principalId, Guid roleId);
     }
 }
