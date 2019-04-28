@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="FewBox.Core.Persistence" Version="1.0.26" />
-    <PackageReference Include="FewBox.Core.Web" Version="1.0.35" />
+    <PackageReference Include="FewBox.Core.Web" Version="1.0.36" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="NSwag.AspNetCore" Version="12.2.0" />

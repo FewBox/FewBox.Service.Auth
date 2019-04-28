@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using FewBox.Core.Persistence.Orm;
 using FewBox.Core.Web.Config;
 using FewBox.Core.Web.Filter;
@@ -11,7 +9,6 @@ using FewBox.Core.Web.Orm;
 using FewBox.Core.Web.Security;
 using FewBox.Core.Web.Token;
 using FewBox.Service.Auth.Domain;
-using FewBox.Service.Auth.ExceptionHandler;
 using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Service.Auth.Model.Services;
 using FewBox.Service.Auth.Repository;
@@ -19,13 +16,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.SwaggerGeneration.Processors.Security;
@@ -46,7 +40,11 @@ namespace FewBox.Service.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc(options=>{
+                options.Filters.Add<ExceptionAsyncFilter>();
+                options.Filters.Add<TransactionAsyncFilter>();
+                options.Filters.Add<TraceAsyncFilter>();
+            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.Configure<RouteOptions>(options=>{
                 options.LowercaseUrls=true;
             });
@@ -78,6 +76,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
             services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
+            services.AddScoped<ITraceLogger, ConsonleTraceLogger>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>(); 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

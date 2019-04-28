@@ -65,7 +65,7 @@ namespace FewBox.Service.Auth.Controllers
         public MetaResponseDto InitAdministrator()
         {
             string username = "fewbox";
-            if(this.UserRepository.IsExist(username))
+            if(this.PrincipalRepository.IsExist(username))
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }

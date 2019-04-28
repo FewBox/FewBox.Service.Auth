@@ -2,7 +2,7 @@ using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Filter;
 using System;
 
-namespace FewBox.Service.Auth.ExceptionHandler
+namespace FewBox.Service.Auth.Domain
 {
     public class ConsoleExceptionHandler : IExceptionHandler
     {
