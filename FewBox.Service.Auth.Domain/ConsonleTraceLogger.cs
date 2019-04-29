@@ -7,7 +7,10 @@ namespace FewBox.Service.Auth.Domain
     {
         public void Trace(string name, string param)
         {
+            ConsoleColor consoleColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine($"{name}-{param}");
+            Console.ForegroundColor = consoleColor;
         }
     }
 }

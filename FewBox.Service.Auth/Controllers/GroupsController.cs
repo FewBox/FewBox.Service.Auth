@@ -21,16 +21,18 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IGroup_UserRepository Group_UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
+        private IUserRepository UserRepository { get; set; }
 
         public GroupsController(IGroupRepository groupRepository, IPrincipalRepository principalRepository,
             IPrincipal_RoleRepository principal_RoleRepository, IGroup_UserRepository group_UserRepository,
-            IRoleRepository roleRepository,IMapper mapper) : base(mapper)
+            IRoleRepository roleRepository, IUserRepository userRepository, IMapper mapper) : base(mapper)
         {
             this.GroupRepository = groupRepository;
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.Group_UserRepository = group_UserRepository;
             this.RoleRepository = roleRepository;
+            this.UserRepository = userRepository;
         }
 
         [HttpGet]
@@ -147,7 +149,9 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<Guid> AddUser(Guid id, Guid userId)
         {
             Guid newId = Guid.Empty;
-            if(!this.Group_UserRepository.IsExist(id, userId))
+            if(!this.Group_UserRepository.IsExist(id, userId)&&
+            this.GroupRepository.IsExist(id)&&
+            this.UserRepository.IsExist(userId))
             {
                 var group_User = new Group_User{ GroupId=id, UserId=userId };
                 group_User.Id = id;

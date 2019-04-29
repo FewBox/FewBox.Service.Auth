@@ -30,7 +30,7 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Group> FindAllByRoot()
         {
-            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having {this.TableName}.PrincipalId='00000000-0000-0000-0000-000000000000'",
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having {this.TableName}.ParentId='00000000-0000-0000-0000-000000000000'",
                 (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; });
         }
 

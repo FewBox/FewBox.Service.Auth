@@ -28,6 +28,9 @@ namespace FewBox.Service.Auth.AutoMapperProfiles
             CreateMap<ApiPersistantDto, Api>();
             CreateMap<ApiPersistantDto, SecurityObject>();
 
+            CreateMap<App, AppDto>();
+            CreateMap<AppPersistantDto, App>();
+
             CreateMap<Module, ModuleDto>();
             CreateMap<ModulePersistantDto, Module>();
             CreateMap<ModulePersistantDto, SecurityObject>();

@@ -8,7 +8,10 @@ namespace FewBox.Service.Auth.Domain
     {
         public ErrorResponseDto Handle(Exception exception)
         {
-            Console.WriteLine(exception.Message);
+            ConsoleColor consoleColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"FewBox: {exception.Message}-{exception.StackTrace}");
+            Console.ForegroundColor = consoleColor;
             return new ErrorResponseDto(exception.Message);
         }
     }

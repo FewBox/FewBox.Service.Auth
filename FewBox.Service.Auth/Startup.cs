@@ -63,6 +63,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<IOrmConfiguration, AppSettingOrmConfiguration>();
             services.AddScoped<IOrmSession, MySqlSession>();
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
+            services.AddScoped<IAppRepository, AppRepository>();
             services.AddScoped<IPrincipalRepository, PrincipalRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGroupRepository, GroupRepository>();

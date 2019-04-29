@@ -46,17 +46,21 @@ namespace FewBox.Service.Auth.Domain
             throw new NotImplementedException();
         }
 
-        public bool IsValid(string username, string password, string userType, out IList<string> roles)
+        public bool IsValid(string username, string password, string userType, out object userId, out IList<string> roles)
         {
             bool isValid = false;
+            Guid id;
             roles = null;
             if(userType == "Form")
             {
-                Guid userId;
-                isValid = this.UserRepository.IsPasswordValid(username, password, out userId);
-                roles = (from role in this.RoleRepository.FindAllByUserId(userId)
-                        select role.Code).ToList();
+                isValid = this.UserRepository.IsPasswordValid(username, password, out id);
+                if(isValid)
+                {
+                    roles = (from role in this.RoleRepository.FindAllByUserId(id)
+                            select role.Code).ToList();
+                }
             }
+            userId = id;
             return isValid;
         }
     }

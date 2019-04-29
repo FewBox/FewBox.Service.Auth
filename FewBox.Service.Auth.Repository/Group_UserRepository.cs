@@ -21,7 +21,7 @@ namespace FewBox.Service.Auth.Repository
 
         public Group_User FindOneByGroupIdAndUserId(Guid groupId, Guid userId)
         {
-            return this.UnitOfWork.Connection.QueryFirstOrDefault($"select * from {this.TableName} where GroupId=@GroupId and UserId=@UserId", new { UserId = userId, GroupId = groupId });
+            return this.UnitOfWork.Connection.QueryFirstOrDefault<Group_User>($"select * from {this.TableName} where GroupId=@GroupId and UserId=@UserId", new { UserId = userId, GroupId = groupId });
         }
 
         public bool IsExist(Guid groupId, Guid userId)

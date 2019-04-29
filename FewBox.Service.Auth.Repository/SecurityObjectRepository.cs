@@ -1,4 +1,5 @@
-﻿using FewBox.Service.Auth.Model.Entities;
+﻿using Dapper;
+using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Persistence.Orm;
 using System;
@@ -12,14 +13,19 @@ namespace FewBox.Service.Auth.Repository
         {
         }
 
+        public int UpdateAppId(Guid id, Guid appId)
+        {
+            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set AppId=@AppId where Id=@Id", new { AppId = appId, Id = id});
+        }
+
         protected override string GetSaveSegmentSql()
         {
-            return "Name,Description";
+            return "AppId,Name,Description";
         }
 
         protected override string GetUpdateSegmentSql()
         {
-            return "Name,Description";
+            return "AppId,Name,Description";
         }
 
         protected override string GetUpdateWithUniqueKeyWhereSegmentSql()
