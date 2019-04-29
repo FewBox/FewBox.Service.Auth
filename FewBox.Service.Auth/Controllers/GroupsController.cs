@@ -112,14 +112,15 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public MetaResponseDto Put(Guid id, [FromBody]GroupPersistantDto groupDto)
+        public PayloadResponseDto<int> Put(Guid id, [FromBody]GroupPersistantDto groupDto)
         {
+            int effect;
             var group = this.Mapper.Map<GroupPersistantDto, Group>(groupDto);
             var updateGroup = this.GroupRepository.FindOne(id);
             var principal = this.Mapper.Map<GroupPersistantDto, Principal>(groupDto);
             principal.Id = updateGroup.PrincipalId;
             this.PrincipalRepository.Update(principal);
-            this.GroupRepository.Update(group);
+            effect = this.GroupRepository.Update(group);
             if (groupDto.RoleIds != null)
             {
                 foreach (Guid roleId in groupDto.RoleIds)
@@ -131,17 +132,20 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
         }
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto Delete(Guid id)
+        public PayloadResponseDto<int> Delete(Guid id)
         {
             var updateGroup = this.GroupRepository.FindOne(id);
             this.PrincipalRepository.Recycle(updateGroup.PrincipalId);
-            this.GroupRepository.Recycle(id);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.GroupRepository.Recycle(id)
+            };
         }
 
         [HttpPost("{id}/users/{userId}")]
@@ -177,6 +181,40 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [HttpPut("{id}/roles/{roleId}")]
+        [Transaction]
+        public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
+        {
+            Guid newId = Guid.Empty;
+            var group = this.GroupRepository.FindOne(id);
+            if(!this.Principal_RoleRepository.IsExist(group.PrincipalId, roleId)&&
+            this.GroupRepository.IsExist(id)&&
+            this.RoleRepository.IsExist(roleId))
+            {
+                var principal_Role = new Principal_Role { PrincipalId = group.PrincipalId, RoleId = roleId };
+                newId = this.Principal_RoleRepository.Save(principal_Role);
+            }
+            return new PayloadResponseDto<Guid>{
+                Payload = newId
+            };
+        }
+
+        [HttpDelete("{id}/roles/{roleId}")]
+        [Transaction]
+        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
+        {
+            int effect = 0;
+            var group = this.GroupRepository.FindOne(id);
+            var principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(group.PrincipalId, roleId);
+            if(principal_Role != null)
+            {
+                effect = this.Principal_RoleRepository.Delete(principal_Role.Id);
+            }
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
+        }
+        
         [HttpGet("{id}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
         {

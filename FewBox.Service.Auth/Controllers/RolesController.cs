@@ -78,20 +78,22 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public MetaResponseDto Put(Guid id, [FromBody]RolePersistantDto roleDto)
+        public PayloadResponseDto<int> Put(Guid id, [FromBody]RolePersistantDto roleDto)
         {
             Role role = this.Mapper.Map<RolePersistantDto, Role>(roleDto);
             role.Id = id;
-            this.RoleRepository.Update(role);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.RoleRepository.Update(role)
+            };
         }
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto Delete(Guid id)
+        public PayloadResponseDto<int> Delete(Guid id)
         {
-            this.RoleRepository.RecycleAsync(id);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.RoleRepository.Recycle(id)
+            };
         }
 
         [HttpGet("count")]

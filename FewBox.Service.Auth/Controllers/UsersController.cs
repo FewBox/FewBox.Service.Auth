@@ -121,15 +121,16 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public MetaResponseDto Put(Guid id, [FromBody]UserPersistantDto userDto)
+        public PayloadResponseDto<int> Put(Guid id, [FromBody]UserPersistantDto userDto)
         {
+            int effect;
             var user = this.Mapper.Map<UserPersistantDto, User>(userDto);
             user.Id = id;
             var updateUser = this.UserRepository.FindOne(id);
             var principal = this.Mapper.Map<UserPersistantDto, Principal>(userDto);
             principal.Id = updateUser.PrincipalId;
             this.PrincipalRepository.Update(principal);
-            this.UserRepository.Update(user);
+            effect = this.UserRepository.Update(user);
             this.Principal_RoleRepository.DeleteByPrincipalId(principal.Id);
             if (userDto.RoleIds != null)
             {
@@ -142,17 +143,20 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
         }
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto Delete(Guid id)
+        public PayloadResponseDto<int> Delete(Guid id)
         {
             var updateUser = this.UserRepository.FindOne(id);
             this.PrincipalRepository.Recycle(updateUser.PrincipalId);
-            this.UserRepository.RecycleAsync(id);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.UserRepository.Recycle(id)
+            };
         }
 
         [HttpPut("{id}/resetpassword")]

@@ -99,15 +99,16 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public MetaResponseDto Put(Guid id, [FromBody]ApiPersistantDto apiDto)
+        public PayloadResponseDto<int> Put(Guid id, [FromBody]ApiPersistantDto apiDto)
         {
+            int effect;
             var api = this.Mapper.Map<ApiPersistantDto, Api>(apiDto);
             api.Id = id;
             var updateApi = this.ApiRepository.FindOne(id);
             var securityObject = this.Mapper.Map<ApiPersistantDto, SecurityObject>(apiDto);
             securityObject.Id = updateApi.SecurityObjectId;
             this.SecurityObjectRepository.Update(securityObject);
-            this.ApiRepository.Update(api);
+            effect = this.ApiRepository.Update(api);
             this.Role_SecurityObjectRepository.DeleteBySecurityId(updateApi.SecurityObjectId);
             if (apiDto.RoleIds != null)
             {
@@ -120,17 +121,20 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
         }
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto Delete(Guid id)
+        public PayloadResponseDto<int> Delete(Guid id)
         {
             var updateApi = this.ApiRepository.FindOne(id);
             this.SecurityObjectRepository.Recycle(updateApi.SecurityObjectId);
-            this.ApiRepository.RecycleAsync(id);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.ApiRepository.Recycle(id)
+            };
         }
 
         [HttpPut("{id}/roles/{roleId}")]
@@ -139,7 +143,9 @@ namespace FewBox.Service.Auth.Controllers
         {
             Guid newId = Guid.Empty;
             var api = this.ApiRepository.FindOne(id);
-            if(!this.Role_SecurityObjectRepository.IsExist(roleId, api.SecurityObjectId))
+            if(!this.Role_SecurityObjectRepository.IsExist(roleId, api.SecurityObjectId)&&
+            this.ApiRepository.IsExist(id)&&
+            this.RoleRepository.IsExist(roleId))
             {
                 var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
                 newId = this.Role_SecurityObjectRepository.Save(role_SecurityObject);

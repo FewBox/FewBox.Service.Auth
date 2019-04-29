@@ -117,15 +117,16 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public MetaResponseDto Put(Guid id, [FromBody]ModulePersistantDto moduleDto)
+        public PayloadResponseDto<int> Put(Guid id, [FromBody]ModulePersistantDto moduleDto)
         {
+            int effect;
             var module = this.Mapper.Map<ModulePersistantDto, Module>(moduleDto);
             module.Id = id;
             var updateModule = this.ModuleRepository.FindOne(id);
             var securityObject = this.Mapper.Map<ModulePersistantDto, SecurityObject>(moduleDto);
             securityObject.Id = updateModule.SecurityObjectId;
             this.SecurityObjectRepository.Update(securityObject);
-            this.ModuleRepository.Update(module);
+            effect = this.ModuleRepository.Update(module);
             this.Role_SecurityObjectRepository.DeleteBySecurityId(updateModule.SecurityObjectId);
             if (moduleDto.RoleIds != null)
             {
@@ -138,17 +139,20 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = effect
+            };
         }
 
         [HttpDelete("{id}")]
         [Transaction]
-        public MetaResponseDto Delete(Guid id)
+        public PayloadResponseDto<int> Delete(Guid id)
         {
             var updateModule = this.ModuleRepository.FindOne(id);
             this.SecurityObjectRepository.Recycle(updateModule.SecurityObjectId);
-            this.ModuleRepository.RecycleAsync(id);
-            return new MetaResponseDto();
+            return new PayloadResponseDto<int>{
+                Payload = this.ModuleRepository.Recycle(id)
+            };
         }
 
         [HttpPut("{id}/roles/{roleId}")]
@@ -157,7 +161,9 @@ namespace FewBox.Service.Auth.Controllers
         {
             Guid newId = Guid.Empty;
             var module = this.ModuleRepository.FindOne(id);
-            if(!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId))
+            if(!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId)&&
+            this.ModuleRepository.IsExist(id)&&
+            this.RoleRepository.IsExist(roleId))
             {
                 var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = module.SecurityObjectId };
                 newId = this.Role_SecurityObjectRepository.Save(role_SecurityObject);
@@ -185,8 +191,9 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("batchgrantrole")]
         [Transaction]
-        public MetaResponseDto BatchGrantRole([FromBody]BatchGrantRoleRequestDto batchGrantRoleRequestDto)
+        public PayloadResponseDto<IList<Guid>> BatchGrantRole([FromBody]BatchGrantRoleRequestDto batchGrantRoleRequestDto)
         {
+            var ids = new List<Guid>();
             if (batchGrantRoleRequestDto.Ids != null)
             {
                 foreach (Guid id in batchGrantRoleRequestDto.Ids)
@@ -197,17 +204,20 @@ namespace FewBox.Service.Auth.Controllers
                     {
                         foreach (Guid roleId in batchGrantRoleRequestDto.RoleIds)
                         {
-                            this.Role_SecurityObjectRepository.Save(new Role_SecurityObject
+                            Guid newId = this.Role_SecurityObjectRepository.Save(new Role_SecurityObject
                             {
                                 SecurityObjectId = module.SecurityObjectId,
                                 RoleId = roleId
                             });
+                            ids.Add(newId);
                         }
                     }
 
                 }
             }
-            return new MetaResponseDto { };
+            return new PayloadResponseDto<IList<Guid>>{
+                Payload = ids
+            };
         }
 
         [HttpPost("{id}/modules/{parentId}")]
