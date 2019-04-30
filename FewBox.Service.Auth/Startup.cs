@@ -77,7 +77,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
             services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
-            services.AddScoped<ITraceLogger, ConsonleTraceLogger>();
+            services.AddScoped<ITraceHandler, ConsoleTraceHandler>();
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>(); 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
