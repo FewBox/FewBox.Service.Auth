@@ -6,6 +6,6 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface ISecurityObjectRepository : IBaseRepository<SecurityObject, Guid>
     {
-        int UpdateAppId(Guid id, Guid appId);
+        int UpdateServiceId(Guid id, Guid serviceId);
     }
 }

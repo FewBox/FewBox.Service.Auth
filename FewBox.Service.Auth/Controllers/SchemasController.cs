@@ -10,6 +10,7 @@ using FewBox.Core.Web.Security;
 using FewBox.Core.Web.Dto;
 using Microsoft.AspNetCore.Authorization;
 using FewBox.Service.Auth.Model.Configs;
+using S = FewBox.Service.Auth.Model.Entities;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -27,14 +28,14 @@ namespace FewBox.Service.Auth.Controllers
         private IModuleRepository ModuleRepository { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
-        private IAppRepository AppRepository { get; set; }
+        private IServiceRepository ServiceRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
 
         public SchemasController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
-            IAppRepository appRepository, ApiConfig apiConfig, IMapper mapper) : base(mapper)
+            IServiceRepository serviceRepository, ApiConfig apiConfig, IMapper mapper) : base(mapper)
         {
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
@@ -46,7 +47,7 @@ namespace FewBox.Service.Auth.Controllers
             this.Group_UserRepository = group_UserRepository;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
-            this.AppRepository = appRepository;
+            this.ServiceRepository = serviceRepository;
             this.ApiConfig = apiConfig;
         }
 
@@ -71,24 +72,24 @@ namespace FewBox.Service.Auth.Controllers
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
-            Guid appId = this.AppRepository.Save(new App { Name = "Auth", Description="Build-In Auth Service."});
+            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = "Auth", Description="Build-In Auth Service."});
             Guid principalId = this.PrincipalRepository.Save(new Principal { Name = username, PrincipalType = PrincipalType.User });
             Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, "landpy");
-            Guid roleId = this.RoleRepository.Save(new Role { Name = "App Admin", Code = "R_APPADMIN" });
+            Guid roleId = this.RoleRepository.Save(new Role { Name = "Supper Admin", Code = "R_SUPPERADMIN" });
             // Init Api
             foreach(var apiItem in this.ApiConfig.ApiItems)
             {
-                this.InitApi(apiItem.Controller, apiItem.Actions, appId, roleId);
+                this.InitApi(apiItem.Controller, apiItem.Actions, serviceId, roleId);
             }
             this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
             return new MetaResponseDto {};
         }
 
-        private void InitApi(string controller, string[] actions, Guid appId, Guid roleId)
+        private void InitApi(string controller, string[] actions, Guid serviceId, Guid roleId)
         {
             foreach(string action in actions)
             {
-                Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { AppId = appId, Name = $"{controller}_{action}" });
+                Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = $"{controller}_{action}" });
                 Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId=securityObjectId, Controller=controller, Action=action });
                 var usersApi = this.ApiRepository.FindOne(usersApiId);
                 this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = usersApi.SecurityObjectId });

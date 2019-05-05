@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Entities;
+using S = FewBox.Service.Auth.Model.Entities;
 
 namespace FewBox.Service.Auth.AutoMapperProfiles
 {
@@ -28,8 +29,8 @@ namespace FewBox.Service.Auth.AutoMapperProfiles
             CreateMap<ApiPersistantDto, Api>();
             CreateMap<ApiPersistantDto, SecurityObject>();
 
-            CreateMap<App, AppDto>();
-            CreateMap<AppPersistantDto, App>();
+            CreateMap<S.Service, ServiceDto>();
+            CreateMap<ServicePersistantDto, S.Service>();
 
             CreateMap<Module, ModuleDto>();
             CreateMap<ModulePersistantDto, Module>();

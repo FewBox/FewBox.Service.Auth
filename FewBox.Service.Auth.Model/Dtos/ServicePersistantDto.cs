@@ -1,9 +1,9 @@
-﻿using FewBox.Core.Web.Dto;
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Model.Dtos
 {
-    public class AppDto : EntityDto<Guid>
+    public class ServicePersistantDto
     {
         public string Name { get; set; }
         public string Description { get; set; }

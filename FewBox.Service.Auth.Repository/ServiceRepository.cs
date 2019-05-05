@@ -4,13 +4,14 @@ using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Persistence.Orm;
 using System;
 using System.Collections.Generic;
+using S = FewBox.Service.Auth.Model.Entities;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class AppRepository : BaseRepository<App, Guid>, IAppRepository
+    public class ServiceRepository : BaseRepository<S.Service, Guid>, IServiceRepository
     {
-        public AppRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
-        : base("app", ormSession, currentUser)
+        public ServiceRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
+        : base("service", ormSession, currentUser)
         {
         }
 

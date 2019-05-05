@@ -2,10 +2,10 @@ USE authentication;
 SET FOREIGN_KEY_CHECKS=0;
 
 -- ----------------------------
--- Table structure for api
+-- Table structure for service
 -- ----------------------------
-DROP TABLE IF EXISTS `app`;
-CREATE TABLE `app` (
+DROP TABLE IF EXISTS `service`;
+CREATE TABLE `service` (
   `Id` char(36) NOT NULL,
   `Name` varchar(45) DEFAULT NULL,
   `Description` varchar(45) DEFAULT NULL,
@@ -17,10 +17,10 @@ CREATE TABLE `app` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Table structure for app_recycle
+-- Table structure for service_recycle
 -- ----------------------------
-DROP TABLE IF EXISTS `app_recycle`;
-CREATE TABLE `app_recycle` (
+DROP TABLE IF EXISTS `service_recycle`;
+CREATE TABLE `service_recycle` (
   `Id` char(36) NOT NULL,
   `Name` varchar(45) DEFAULT NULL,
   `Description` varchar(45) DEFAULT NULL,
@@ -309,7 +309,7 @@ CREATE TABLE `role_security_recycle` (
 DROP TABLE IF EXISTS `securityobject`;
 CREATE TABLE `securityobject` (
   `Id` char(36) NOT NULL,
-  `AppId` char(36) DEFAULT NULL,
+  `ServiceId` char(36) DEFAULT NULL,
   `Name` varchar(45) DEFAULT NULL,
   `Description` varchar(100) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
@@ -325,7 +325,7 @@ CREATE TABLE `securityobject` (
 DROP TABLE IF EXISTS `securityobject_recycle`;
 CREATE TABLE `securityobject_recycle` (
   `Id` char(36) NOT NULL,
-  `AppId` char(36) DEFAULT NULL,
+  `ServiceId` char(36) DEFAULT NULL,
   `Name` varchar(45) DEFAULT NULL,
   `Description` varchar(100) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,

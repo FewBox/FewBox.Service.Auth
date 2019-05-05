@@ -13,19 +13,19 @@ namespace FewBox.Service.Auth.Repository
         {
         }
 
-        public int UpdateAppId(Guid id, Guid appId)
+        public int UpdateServiceId(Guid id, Guid serviceId)
         {
-            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set AppId=@AppId where Id=@Id", new { AppId = appId, Id = id});
+            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ServiceId=@ServiceId where Id=@Id", new { ServiceId = serviceId, Id = id});
         }
 
         protected override string GetSaveSegmentSql()
         {
-            return "AppId,Name,Description";
+            return "ServiceId,Name,Description";
         }
 
         protected override string GetUpdateSegmentSql()
         {
-            return "AppId,Name,Description";
+            return "ServiceId,Name,Description";
         }
 
         protected override string GetUpdateWithUniqueKeyWhereSegmentSql()
