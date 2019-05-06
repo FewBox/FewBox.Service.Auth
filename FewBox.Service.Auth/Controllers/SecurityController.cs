@@ -32,7 +32,7 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [HttpGet("{controllerName}/{actionName}")]
-        public PayloadResponseDto<IList<string>> Get(string controllerName, string actionName)
+        public PayloadResponseDto<IList<string>> GetRoles(string controllerName, string actionName)
         {
             return new PayloadResponseDto<IList<string>>{
                 Payload = this.AuthenticationService.FindRolesByControllerAndAction(controllerName,actionName)
