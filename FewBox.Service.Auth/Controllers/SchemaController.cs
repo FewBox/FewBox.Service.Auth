@@ -16,7 +16,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
-    public class SchemasController : MapperController
+    public class SchemaController : MapperController
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
@@ -31,7 +31,7 @@ namespace FewBox.Service.Auth.Controllers
         private IServiceRepository ServiceRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
 
-        public SchemasController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
+        public SchemaController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
