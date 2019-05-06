@@ -14,7 +14,6 @@ using FewBox.Core.Web.Security;
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Policy="JWTRole_ControllerAction")]
     public class SecurityController : Controller
     {
         private IUserRepository UserRepository { get; set; }
@@ -39,7 +38,6 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [AllowAnonymous]
         [HttpPost("sentvalidatecode/{email}")]
         public MetaResponseDto SentValidateCode(string email)
         {
@@ -54,7 +52,6 @@ namespace FewBox.Service.Auth.Controllers
             return new MetaResponseDto {};
         }
 
-        [AllowAnonymous]
         [HttpPost("changepassword")]
         [Transaction]
         public MetaResponseDto ChangePassword([FromBody] ChangePasswordRequestDto changePasswordRequestDto)
