@@ -22,10 +22,10 @@ namespace FewBox.Service.Auth.Domain
             this.UserRepository = userRepository;
         }
 
-        public IList<string> FindRolesByControllerAndAction(string controller, string action)
+        public IList<string> FindRolesByServiceAndControllerAndAction(string service, string controller, string action)
         {
             var roles = new List<string>();
-            var api = this.ApiRepository.FindOneByControllerAndAction(controller, action);
+            var api = this.ApiRepository.FindOneByServiceAndControllerAndAction(service, controller, action);
             if(api!=null)
             {
                 var role_SecurityObjects = this.Role_SecurityObjectRepository.FindAllBySecurityId(api.SecurityObjectId);

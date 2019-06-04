@@ -21,7 +21,7 @@ namespace FewBox.Service.Auth.Controllers
         private IRoleRepository RoleRepository { get; set; }
         private IAuthenticationService AuthenticationService { get; set; }
 
-        public SecurityController(IUserRepository userRepository, IPrincipal_RoleRepository principal_RoleRepository, 
+        public SecurityController(IUserRepository userRepository, IPrincipal_RoleRepository principal_RoleRepository,
             IRoleRepository roleRepository, IAuthenticationService authenticationService)
         {
             this.UserRepository = userRepository;
@@ -30,11 +30,12 @@ namespace FewBox.Service.Auth.Controllers
             this.AuthenticationService = authenticationService;
         }
 
-        [HttpGet("{controllerName}/{actionName}")]
-        public PayloadResponseDto<IList<string>> GetRoles(string controllerName, string actionName)
+        [HttpGet("{serviceName}/{controllerName}/{actionName}")]
+        public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)
         {
-            return new PayloadResponseDto<IList<string>>{
-                Payload = this.AuthenticationService.FindRolesByControllerAndAction(controllerName,actionName)
+            return new PayloadResponseDto<IList<string>>
+            {
+                Payload = this.AuthenticationService.FindRolesByServiceAndControllerAndAction(serviceName, controllerName, actionName)
             };
         }
 
@@ -49,7 +50,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 // Todo: 
             }
-            return new MetaResponseDto {};
+            return new MetaResponseDto { };
         }
 
         [HttpPost("changepassword")]

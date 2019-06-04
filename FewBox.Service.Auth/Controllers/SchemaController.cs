@@ -11,6 +11,7 @@ using FewBox.Core.Web.Dto;
 using Microsoft.AspNetCore.Authorization;
 using FewBox.Service.Auth.Model.Configs;
 using S = FewBox.Service.Auth.Model.Entities;
+using FewBox.Core.Web.Config;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -18,6 +19,7 @@ namespace FewBox.Service.Auth.Controllers
     [Authorize(Policy="JWTRole_ControllerAction")]
     public class SchemaController : MapperController
     {
+        private SecurityConfig SecurityConfig { get; set; }
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
         private IGroupRepository GroupRepository { get; set; }
@@ -31,12 +33,13 @@ namespace FewBox.Service.Auth.Controllers
         private IServiceRepository ServiceRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
 
-        public SchemaController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
+        public SchemaController(SecurityConfig securityConfig, IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
             IServiceRepository serviceRepository, ApiConfig apiConfig, IMapper mapper) : base(mapper)
         {
+            this.SecurityConfig = securityConfig;
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
             this.GroupRepository = groupRepository;
@@ -72,7 +75,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
-            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = "Auth", Description="Build-In Auth Service."});
+            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = this.SecurityConfig.Name, Description="Build-In Auth Service."});
             Guid principalId = this.PrincipalRepository.Save(new Principal { Name = username, PrincipalType = PrincipalType.User });
             Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, "landpy");
             Guid roleId = this.RoleRepository.Save(new Role { Name = "Supper Admin", Code = "R_SUPPERADMIN" });

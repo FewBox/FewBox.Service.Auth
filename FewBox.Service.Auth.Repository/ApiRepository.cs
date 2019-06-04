@@ -19,10 +19,10 @@ namespace FewBox.Service.Auth.Repository
             return this.UnitOfWork.Connection.Query<Api>($"select * from {this.TableName} where Controller like @Controller", new { Controller = "%" + keyword + "%"});
         }
 
-        public Api FindOneByControllerAndAction(string controller, string action)
+        public Api FindOneByServiceAndControllerAndAction(string service, string controller, string action)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Api>($"select * from {this.TableName} where Controller=@Controller and Action=@Action", 
-                new { Controller = controller, Action = action });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Api>($"select * from {this.TableName} where Controller=@Controller and Action=@Action and SecurityObjectId in (select Id from securityobject where ServiceId = (select Id from service where Name=@Service))", 
+                new { Controller = controller, Action = action, Service = service });
         }
 
         protected override string GetSaveSegmentSql()

@@ -172,9 +172,9 @@ namespace FewBox.Service.Auth.Controllers
         }
         
         [HttpGet("seek/{controllerName}/{actionName}/roles")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> Get(string controllerName, string actionName)
+        public PayloadResponseDto<IEnumerable<RoleDto>> Get(string serviceName, string controllerName, string actionName)
         {
-            var api = this.ApiRepository.FindOneByControllerAndAction(controllerName, actionName);
+            var api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceName, controllerName, actionName);
             return new PayloadResponseDto<IEnumerable<RoleDto>>{
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByApiId(api.Id))
             };

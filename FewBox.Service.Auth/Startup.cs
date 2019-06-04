@@ -56,6 +56,8 @@ namespace FewBox.Service.Auth
             services.AddSingleton(jwtConfig);
             var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
             services.AddSingleton(apiConfig);
+            var securityConfig = this.Configuration.GetSection("SecurityConfig").Get<SecurityConfig>();
+            services.AddSingleton(securityConfig);
             services.AddScoped<ITokenService, JWTToken>();
             services.AddScoped<IAuthorizationHandler, RoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();

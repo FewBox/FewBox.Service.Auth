@@ -7,7 +7,7 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface IApiRepository : IBaseRepository<Api, Guid>
     {
-        Api FindOneByControllerAndAction(string controller, string action);
+        Api FindOneByServiceAndControllerAndAction(string service, string controller, string action);
         IEnumerable<Api> FindAllByKeyword(string keyword);
     }
 }
