@@ -81,7 +81,11 @@ namespace FewBox.Service.Auth
             services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
             services.AddScoped<ITraceHandler, ConsoleTraceHandler>();
             services.AddHttpContextAccessor();
-            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>(); 
+            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            services.AddScoped<IAppService, AppService>();
+            // Used for Config.
+            var healthyConfig = this.Configuration.GetSection("HealthyConfig").Get<HealthyConfig>();
+            services.AddSingleton(healthyConfig);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
