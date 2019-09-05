@@ -2,7 +2,6 @@
 using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
-using FewBox.Service.Auth.Model.Services;
 using FewBox.Core.Web.Controller;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Filter;
@@ -15,70 +14,29 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
-    public class UsersController : MapperController
+    public class UsersController : ResourcesController<IUserRepository, User, Guid, UserDto, UserPersistantDto>
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
-        private IUserRepository UserRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IGroup_UserRepository Group_UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
 
         public UsersController(IUserRepository userRepository, IPrincipalRepository principalRepository, 
             IPrincipal_RoleRepository principal_RoleRepository, IGroup_UserRepository group_UserRepository,
-            IRoleRepository roleRepository, IMapper mapper): base(mapper)
+            IRoleRepository roleRepository, IMapper mapper): base(userRepository, mapper)
         {
-            this.UserRepository = userRepository;
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.Group_UserRepository = group_UserRepository;
             this.RoleRepository = roleRepository;
         }
-
-        [HttpGet("count")]
-        public PayloadResponseDto<int> Count()
-        {
-            return new PayloadResponseDto<int> {
-                Payload = this.UserRepository.Count()
-            };
-        }
   
-        [HttpGet]
-        public PayloadResponseDto<IEnumerable<UserDto>> Get()
-        {
-            return new PayloadResponseDto<IEnumerable<UserDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.UserRepository.FindAll())
-            };
-        }
-
         [HttpGet("search/{keyword}")]
         public PayloadResponseDto<IEnumerable<UserDto>> Get(string keyword)
         {
             return new PayloadResponseDto<IEnumerable<UserDto>>
             {
-                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.UserRepository.FindAllByKeyword(keyword))
-            };
-        }
-
-        [HttpGet("paging/{pageIndex}/{pageRange}")]
-        public PayloadResponseDto<PagingDto<UserDto>> Get(int pageIndex = 1, int pageRange = 5)
-        {
-            return new PayloadResponseDto<PagingDto<UserDto>>
-            {
-                Payload = new PagingDto<UserDto>
-                {
-                    Items = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.UserRepository.FindAll(pageIndex, pageRange)),
-                    PagingCount = (int)Math.Ceiling((double)this.UserRepository.Count() / pageRange)
-                }
-            };
-        }
-
-        [HttpGet("{id}")]
-        public PayloadResponseDto<UserDto> Get(Guid id)
-        {
-            return new PayloadResponseDto<UserDto>
-            {
-                Payload = this.Mapper.Map<User, UserDto>(this.UserRepository.FindOne(id))
+                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserDto>>(this.Repository.FindAllByKeyword(keyword))
             };
         }
 
@@ -86,16 +44,16 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<IEnumerable<UserProfileDto>> Get([FromQuery] Guid[] ids)
         {
             return new PayloadResponseDto<IEnumerable<UserProfileDto>> {
-                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserProfileDto>>(this.UserRepository.FindAllByIds(ids))
+                Payload = this.Mapper.Map<IEnumerable<User>, IEnumerable<UserProfileDto>>(this.Repository.FindAllByIds(ids))
             };
         }
 
         [HttpPost]
         [Transaction]
-        public PayloadResponseDto<Guid> Post([FromBody]UserPersistantDto userDto)
+        public override PayloadResponseDto<Guid> Post([FromBody]UserPersistantDto userDto)
         {
             var user = this.Mapper.Map<UserPersistantDto, User>(userDto);
-            var queryUser = this.UserRepository.FindOneByUsername(user.Name, user.Type);
+            var queryUser = this.Repository.FindOneByUsername(user.Name, user.Type);
             if(queryUser != null){
                 return new PayloadResponseDto<Guid> { IsSuccessful = false, ErrorCode="USERNAME_ALREADYEXISTS", ErrorMessage ="The user name is already exits!", Payload = Guid.Empty };
             }
@@ -103,7 +61,7 @@ namespace FewBox.Service.Auth.Controllers
             principal.PrincipalType = PrincipalType.User;
             Guid principalId = this.PrincipalRepository.Save(principal);
             user.PrincipalId = principalId;
-            Guid userId = this.UserRepository.SaveWithMD5Password(user, userDto.Password);
+            Guid userId = this.Repository.SaveWithMD5Password(user, userDto.Password);
             if (userDto.RoleIds != null)
             {
                 foreach (Guid roleId in userDto.RoleIds)
@@ -121,16 +79,16 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public PayloadResponseDto<int> Put(Guid id, [FromBody]UserPersistantDto userDto)
+        public override PayloadResponseDto<int> Put(Guid id, [FromBody]UserPersistantDto userDto)
         {
             int effect;
             var user = this.Mapper.Map<UserPersistantDto, User>(userDto);
             user.Id = id;
-            var updateUser = this.UserRepository.FindOne(id);
+            var updateUser = this.Repository.FindOne(id);
             var principal = this.Mapper.Map<UserPersistantDto, Principal>(userDto);
             principal.Id = updateUser.PrincipalId;
             this.PrincipalRepository.Update(principal);
-            effect = this.UserRepository.Update(user);
+            effect = this.Repository.Update(user);
             this.Principal_RoleRepository.DeleteByPrincipalId(principal.Id);
             if (userDto.RoleIds != null)
             {
@@ -150,12 +108,12 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpDelete("{id}")]
         [Transaction]
-        public PayloadResponseDto<int> Delete(Guid id)
+        public override PayloadResponseDto<int> Delete(Guid id)
         {
-            var updateUser = this.UserRepository.FindOne(id);
+            var updateUser = this.Repository.FindOne(id);
             this.PrincipalRepository.Recycle(updateUser.PrincipalId);
             return new PayloadResponseDto<int>{
-                Payload = this.UserRepository.Recycle(id)
+                Payload = this.Repository.Recycle(id)
             };
         }
 
@@ -163,7 +121,7 @@ namespace FewBox.Service.Auth.Controllers
         [Transaction]
         public MetaResponseDto ResetPassword(Guid id, [FromBody] ResetPasswordRequestDto resetPasswordRequestDto)
         {
-            this.UserRepository.ResetPassword(id, resetPasswordRequestDto.Password);
+            this.Repository.ResetPassword(id, resetPasswordRequestDto.Password);
             return new MetaResponseDto { };
         }
 
@@ -203,7 +161,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
         {
             Guid newId = Guid.Empty;
-            var user = this.UserRepository.FindOne(id);
+            var user = this.Repository.FindOne(id);
             if(!this.Principal_RoleRepository.IsExist(user.PrincipalId, roleId))
             {
                 var principal_Role = new Principal_Role { PrincipalId = user.PrincipalId, RoleId = roleId };
@@ -219,7 +177,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
         {
             int effect = 0;
-            var user = this.UserRepository.FindOne(id);
+            var user = this.Repository.FindOne(id);
             var principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(user.PrincipalId, roleId);
             if(principal_Role != null)
             {

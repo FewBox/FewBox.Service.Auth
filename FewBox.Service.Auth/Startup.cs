@@ -145,7 +145,6 @@ namespace FewBox.Service.Auth
             //app.UseHttpsRedirection();
             app.UseMvc();
             app.UseStaticFiles();
-            app.UseSwagger();
             if (env.IsDevelopment() || env.IsStaging())  
             {
                 app.UseSwagger();  

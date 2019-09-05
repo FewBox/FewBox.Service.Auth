@@ -3,51 +3,40 @@ using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Service.Auth.Model.Services;
-using FewBox.Core.Web.Controller;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using FewBox.Core.Web.Controller;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
-    public class ModulesController : MapperController
+    public class ModulesController : ResourcesController<IModuleRepository, Module, Guid, ModuleDto, ModulePersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
-        private IModuleRepository ModuleRepository { get; set; }
         private IModuleService ModuleService { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
 
         public ModulesController(IModuleRepository moduleRepository, ISecurityObjectRepository securityObjectRepository,
         IModuleService moduleService, IRole_SecurityObjectRepository role_SecurityObjectRepository,
-        IRoleRepository roleRepository, IMapper mapper) : base(mapper)
+        IRoleRepository roleRepository, IMapper mapper) : base(moduleRepository, mapper)
         {
-            this.ModuleRepository = moduleRepository;
             this.SecurityObjectRepository = securityObjectRepository;
             this.ModuleService = moduleService;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
             this.RoleRepository = roleRepository;
         }
 
-        [HttpGet]
-        public PayloadResponseDto<IEnumerable<ModuleDto>> Get()
-        {
-            return new PayloadResponseDto<IEnumerable<ModuleDto>>
-            {
-                Payload = this.Mapper.Map<IEnumerable<Module>, IEnumerable<ModuleDto>>(this.ModuleRepository.FindAll())
-            };
-        }
-
         [HttpGet("root")]
         public PayloadResponseDto<IEnumerable<ModuleDto>> GetRoot()
         {
             var modules = new List<ModuleDto>();
-            var rootModules = this.ModuleRepository.FindAllByRoot();
+            var rootModules = this.Repository.FindAllByRoot();
             foreach (var module in rootModules)
             {
                 var moduleDto = this.ModuleService.GetTree(module.Key);
@@ -59,46 +48,15 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpGet("count")]
-        public PayloadResponseDto<int> Count()
-        {
-            return new PayloadResponseDto<int>
-            {
-                Payload = this.ModuleRepository.Count()
-            };
-        }
-
-        [HttpGet("paging/{pageIndex}/{pageRange}")]
-        public PayloadResponseDto<PagingDto<ModuleDto>> Get(int pageIndex = 1, int pageRange = 5)
-        {
-            return new PayloadResponseDto<PagingDto<ModuleDto>>
-            {
-                Payload = new PagingDto<ModuleDto>
-                {
-                    Items = this.Mapper.Map<IEnumerable<Module>, IEnumerable<ModuleDto>>(this.ModuleRepository.FindAll(pageIndex, pageRange)),
-                    PagingCount = (int)Math.Ceiling((double)this.ModuleRepository.Count() / pageRange)
-                }
-            };
-        }
-
-        [HttpGet("{id}")]
-        public PayloadResponseDto<ModuleDto> Get(Guid id)
-        {
-            return new PayloadResponseDto<ModuleDto>
-            {
-                Payload = this.Mapper.Map<Module, ModuleDto>(this.ModuleRepository.FindOne(id))
-            };
-        }
-
         [HttpPost]
         [Transaction]
-        public PayloadResponseDto<Guid> Post([FromBody]ModulePersistantDto moduleDto)
+        public override PayloadResponseDto<Guid> Post([FromBody]ModulePersistantDto moduleDto)
         {
             var securityObject = this.Mapper.Map<ModulePersistantDto, SecurityObject>(moduleDto);
             Guid securityObjectId = this.SecurityObjectRepository.Save(securityObject);
             var module = this.Mapper.Map<ModulePersistantDto, Module>(moduleDto);
             module.SecurityObjectId = securityObject.Id;
-            Guid moduleId = this.ModuleRepository.Save(module);
+            Guid moduleId = this.Repository.Save(module);
             if (moduleDto.RoleIds != null)
             {
                 foreach (Guid roleId in moduleDto.RoleIds)
@@ -117,16 +75,16 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPut("{id}")]
         [Transaction]
-        public PayloadResponseDto<int> Put(Guid id, [FromBody]ModulePersistantDto moduleDto)
+        public override PayloadResponseDto<int> Put(Guid id, [FromBody]ModulePersistantDto moduleDto)
         {
             int effect;
             var module = this.Mapper.Map<ModulePersistantDto, Module>(moduleDto);
             module.Id = id;
-            var updateModule = this.ModuleRepository.FindOne(id);
+            var updateModule = this.Repository.FindOne(id);
             var securityObject = this.Mapper.Map<ModulePersistantDto, SecurityObject>(moduleDto);
             securityObject.Id = updateModule.SecurityObjectId;
             this.SecurityObjectRepository.Update(securityObject);
-            effect = this.ModuleRepository.Update(module);
+            effect = this.Repository.Update(module);
             this.Role_SecurityObjectRepository.DeleteBySecurityId(updateModule.SecurityObjectId);
             if (moduleDto.RoleIds != null)
             {
@@ -146,12 +104,12 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpDelete("{id}")]
         [Transaction]
-        public PayloadResponseDto<int> Delete(Guid id)
+        public override PayloadResponseDto<int> Delete(Guid id)
         {
-            var updateModule = this.ModuleRepository.FindOne(id);
+            var updateModule = this.Repository.FindOne(id);
             this.SecurityObjectRepository.Recycle(updateModule.SecurityObjectId);
             return new PayloadResponseDto<int>{
-                Payload = this.ModuleRepository.Recycle(id)
+                Payload = this.Repository.Recycle(id)
             };
         }
 
@@ -160,9 +118,9 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
         {
             Guid newId = Guid.Empty;
-            var module = this.ModuleRepository.FindOne(id);
+            var module = this.Repository.FindOne(id);
             if(!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId)&&
-            this.ModuleRepository.IsExist(id)&&
+            this.Repository.IsExist(id)&&
             this.RoleRepository.IsExist(roleId))
             {
                 var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = module.SecurityObjectId };
@@ -178,7 +136,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
         {
             int effect = 0;
-            var module = this.ModuleRepository.FindOne(id);
+            var module = this.Repository.FindOne(id);
             var role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(roleId, module.SecurityObjectId);
             if(role_SecurityObject != null)
             {
@@ -198,7 +156,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 foreach (Guid id in batchGrantRoleRequestDto.Ids)
                 {
-                    var module = this.ModuleRepository.FindOne(id);
+                    var module = this.Repository.FindOne(id);
                     this.Role_SecurityObjectRepository.DeleteBySecurityId(module.SecurityObjectId);
                     if (batchGrantRoleRequestDto.RoleIds != null)
                     {
@@ -225,7 +183,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<int> ChangeParent(Guid id, Guid parentId)
         {
             int effect = 0;
-            effect = this.ModuleRepository.UpdateParent(id, parentId);
+            effect = this.Repository.UpdateParent(id, parentId);
             return new PayloadResponseDto<int>{
                 Payload = effect
             };
@@ -234,7 +192,7 @@ namespace FewBox.Service.Auth.Controllers
         [HttpGet("seek/{moduleKey}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> Get(string moduleKey)
         {
-            var module = this.ModuleRepository.FindOneByKey(moduleKey);
+            var module = this.Repository.FindOneByKey(moduleKey);
             return new PayloadResponseDto<IEnumerable<RoleDto>>{
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(module.Id))
             };
