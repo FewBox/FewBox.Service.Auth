@@ -1,19 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using FewBox.Core.Web.Security;
 using FewBox.Service.Auth.Model.Repositories;
-using Microsoft.AspNetCore.Http;
 
 namespace FewBox.Service.Auth.Domain
 {
-    public class LocalAuthenticationService : IAuthenticationService
+    public class LocalAuthService : IAuthService
     {
         private IApiRepository ApiRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
         private IRole_SecurityObjectRepository  Role_SecurityObjectRepository { get; set; } 
         private IUserRepository UserRepository { get; set; }
-        public LocalAuthenticationService(IApiRepository apiRepository, IRoleRepository roleRepository, 
+        public LocalAuthService(IApiRepository apiRepository, IRoleRepository roleRepository, 
         IRole_SecurityObjectRepository role_SecurityObjectRepository, IUserRepository userRepository)
         {
             this.ApiRepository = apiRepository;
@@ -22,7 +20,7 @@ namespace FewBox.Service.Auth.Domain
             this.UserRepository = userRepository;
         }
 
-        public IList<string> FindRolesByServiceAndControllerAndAction(string service, string controller, string action)
+        public IList<string> FindRoles(string service, string controller, string action)
         {
             var roles = new List<string>();
             var api = this.ApiRepository.FindOneByServiceAndControllerAndAction(service, controller, action);
@@ -41,27 +39,9 @@ namespace FewBox.Service.Auth.Domain
             return roles;
         }
 
-        public IList<string> FindRolesByMethod(string method)
+        public IList<string> FindRoles(string method)
         {
             throw new NotImplementedException();
-        }
-
-        public bool IsValid(string username, string password, string userType, out object userId, out IList<string> roles)
-        {
-            bool isValid = false;
-            Guid id;
-            roles = null;
-            if(userType == "Form")
-            {
-                isValid = this.UserRepository.IsPasswordValid(username, password, out id);
-                if(isValid)
-                {
-                    roles = (from role in this.RoleRepository.FindAllByUserId(id)
-                            select role.Code).ToList();
-                }
-            }
-            userId = id;
-            return isValid;
         }
     }
 }

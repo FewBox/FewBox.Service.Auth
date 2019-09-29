@@ -8,13 +8,12 @@ using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using FewBox.Core.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Policy="JWTRole_ControllerAction")]
+    [Authorize(Policy = "JWTRole_ControllerAction")]
     public class ApisController : ResourcesController<IApiRepository, Api, Guid, ApiDto, ApiPersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
@@ -30,8 +29,8 @@ namespace FewBox.Service.Auth.Controllers
             this.RoleRepository = roleRepository;
         }
 
-        [HttpGet("search/{keyword}")]
-        public PayloadResponseDto<IEnumerable<ApiDto>> Get(string keyword)
+        [HttpGet("search")]
+        public PayloadResponseDto<IEnumerable<ApiDto>> Get([FromQuery]string keyword)
         {
             return new PayloadResponseDto<IEnumerable<ApiDto>>
             {
@@ -59,7 +58,8 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<Guid> {
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = apiId
             };
         }
@@ -88,7 +88,8 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = effect
             };
         }
@@ -99,7 +100,8 @@ namespace FewBox.Service.Auth.Controllers
         {
             var updateApi = this.Repository.FindOne(id);
             this.SecurityObjectRepository.Recycle(updateApi.SecurityObjectId);
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = this.Repository.Recycle(id)
             };
         }
@@ -110,48 +112,34 @@ namespace FewBox.Service.Auth.Controllers
         {
             Guid newId = Guid.Empty;
             var api = this.Repository.FindOne(id);
-            if(!this.Role_SecurityObjectRepository.IsExist(roleId, api.SecurityObjectId)&&
-            this.Repository.IsExist(id)&&
+            if (!this.Role_SecurityObjectRepository.IsExist(roleId, api.SecurityObjectId) &&
+            this.Repository.IsExist(id) &&
             this.RoleRepository.IsExist(roleId))
             {
                 var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
                 newId = this.Role_SecurityObjectRepository.Save(role_SecurityObject);
             }
-            return new PayloadResponseDto<Guid>{
-                Payload = newId
-            };
-        }
-
-        [HttpDelete("{id}/roles/{roleId}")]
-        [Transaction]
-        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
-        {
-            int effect = 0;
-            var api = this.Repository.FindOne(id);
-            var role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(roleId, api.SecurityObjectId);
-            if(role_SecurityObject != null)
+            return new PayloadResponseDto<Guid>
             {
-                effect = this.Role_SecurityObjectRepository.Delete(role_SecurityObject.Id);
-            }
-            return new PayloadResponseDto<int>{
-                Payload = effect
-            };
-        }
-        
-        [HttpGet("seek/{controllerName}/{actionName}/roles")]
-        public PayloadResponseDto<IEnumerable<RoleDto>> Get(string serviceName, string controllerName, string actionName)
-        {
-            var api = this.Repository.FindOneByServiceAndControllerAndAction(serviceName, controllerName, actionName);
-            return new PayloadResponseDto<IEnumerable<RoleDto>>{
-                Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByApiId(api.Id))
+                Payload = newId
             };
         }
 
         [HttpGet("{id}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
         {
-            return new PayloadResponseDto<IEnumerable<RoleDto>> {
+            return new PayloadResponseDto<IEnumerable<RoleDto>>
+            {
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByApiId(id))
+            };
+        }
+
+        [HttpGet("seek")]
+        public PayloadResponseDto<ApiDto> Get([FromQuery] string serviceName, string controllerName, string actionName)
+        {
+            return new PayloadResponseDto<ApiDto>
+            {
+                Payload = this.Mapper.Map<Api, ApiDto>(this.Repository.FindOneByServiceAndControllerAndAction(serviceName, controllerName, actionName))
             };
         }
     }

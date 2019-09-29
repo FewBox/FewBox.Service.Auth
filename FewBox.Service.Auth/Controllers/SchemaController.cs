@@ -16,7 +16,7 @@ using FewBox.Core.Web.Config;
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Policy="JWTRole_ControllerAction")]
+    [Authorize(Policy = "JWTRole_ControllerAction")]
     public class SchemaController : MapperController
     {
         private SecurityConfig SecurityConfig { get; set; }
@@ -58,7 +58,7 @@ namespace FewBox.Service.Auth.Controllers
         [HttpGet("isinit")]
         public MetaResponseDto IsInit()
         {
-            if(this.UserRepository.Count() > 0)
+            if (this.UserRepository.Count() > 0)
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
             }
@@ -66,34 +66,37 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("initadministrator")]
+        [HttpPost("init")]
         [Transaction]
-        public MetaResponseDto InitAdministrator()
+        public MetaResponseDto Init([FromBody]InitRequestDto initRequestDto)
         {
-            string username = "fewbox";
-            if(this.PrincipalRepository.IsExist(username))
+            if (this.UserRepository.Count() > 0)
+            {
+                return new MetaResponseDto { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
+            }
+            if (this.PrincipalRepository.IsExist(initRequestDto.AdminName))
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
-            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = this.SecurityConfig.Name, Description="Build-In Auth Service."});
-            Guid principalId = this.PrincipalRepository.Save(new Principal { Name = username, PrincipalType = PrincipalType.User });
-            Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, "landpy");
+            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = this.SecurityConfig.Name, Description = "Build-In Auth Service." });
+            Guid principalId = this.PrincipalRepository.Save(new Principal { Name = initRequestDto.AdminName, PrincipalType = PrincipalType.User });
+            Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, initRequestDto.Password);
             Guid roleId = this.RoleRepository.Save(new Role { Name = "Supper Admin", Code = "R_SUPPERADMIN" });
             // Init Api
-            foreach(var apiItem in this.ApiConfig.ApiItems)
+            foreach (var apiItem in this.ApiConfig.ApiItems)
             {
                 this.InitApi(apiItem.Controller, apiItem.Actions, serviceId, roleId);
             }
             this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
-            return new MetaResponseDto {};
+            return new MetaResponseDto { };
         }
 
         private void InitApi(string controller, string[] actions, Guid serviceId, Guid roleId)
         {
-            foreach(string action in actions)
+            foreach (string action in actions)
             {
                 Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = $"{controller}_{action}" });
-                Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId=securityObjectId, Controller=controller, Action=action });
+                Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId = securityObjectId, Controller = controller, Action = action });
                 var usersApi = this.ApiRepository.FindOne(usersApiId);
                 this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = usersApi.SecurityObjectId });
             }

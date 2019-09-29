@@ -21,14 +21,5 @@ namespace FewBox.Service.Auth.Controllers
         {
             this.SecurityObjectRepository = securityObjectRepository;
         }
-        
-        [HttpPut("{id}/securityobjects/{securityObjectId}")]
-        [Transaction]
-        public PayloadResponseDto<int> Put(Guid id, Guid securityObjectId)
-        {
-            return new PayloadResponseDto<int>{
-                Payload = this.SecurityObjectRepository.UpdateServiceId(securityObjectId, id)
-            };
-        }
     }
 }

@@ -12,6 +12,7 @@ script:
   - dotnet publish -c Release $PROJECTNAME/$PROJECTNAME.csproj
   - cd $TRAVIS_BUILD_DIR/$PROJECTNAME/bin/Release/netcoreapp2.2/publish
   - cp $TRAVIS_BUILD_DIR/Dockerfile ./
+  - cp $TRAVIS_BUILD_DIR/.dockerignore ./
   # build latest image always
   - docker build -t $DOCKER_REPO_SLUG:latest .
   # build the tagged image

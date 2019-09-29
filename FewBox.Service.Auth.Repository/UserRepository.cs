@@ -11,7 +11,7 @@ namespace FewBox.Service.Auth.Repository
 {
     public class UserRepository : BaseRepository<User, Guid>, IUserRepository
     {
-        public UserRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
+        public UserRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("user", ormSession, currentUser)
         {
         }
@@ -83,6 +83,10 @@ namespace FewBox.Service.Auth.Repository
             {
                 userId = user.Id;
                 isPasswordValid = user.SaltMD5Password == SaltMD5Utility.Encrypt(password, user.Salt.ToString());
+            }
+            else
+            {
+                userId = Guid.Empty;
             }
             return isPasswordValid;
         }

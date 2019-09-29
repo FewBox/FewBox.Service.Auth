@@ -52,6 +52,8 @@ namespace FewBox.Service.Auth
             services.AddAutoMapper();
             services.AddMemoryCache();
             services.AddRouting(options => options.LowercaseUrls = true);
+            var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
+            services.AddSingleton(authConfig);
             var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
             services.AddSingleton(jwtConfig);
             var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
@@ -61,7 +63,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<ITokenService, JWTToken>();
             services.AddScoped<IAuthorizationHandler, RoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
-            services.AddScoped<IAuthenticationService, LocalAuthenticationService>();
+            services.AddScoped<IAuthService, LocalAuthService>();
             services.AddScoped<IOrmConfiguration, AppSettingOrmConfiguration>();
             services.AddScoped<IOrmSession, MySqlSession>();
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();

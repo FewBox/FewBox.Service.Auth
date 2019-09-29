@@ -124,21 +124,6 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpDelete("{id}/users/{userId}")]
-        [Transaction]
-        public PayloadResponseDto<int> RemoveUser(Guid id, Guid userId)
-        {
-            int effect = 0;
-            var group_User = this.Group_UserRepository.FindOneByGroupIdAndUserId(id, userId);
-            if(group_User != null)
-            {
-                effect = this.Group_UserRepository.Delete(group_User.Id);
-            }
-            return new PayloadResponseDto<int>{
-                Payload = effect
-            };
-        }
-
         [HttpPut("{id}/roles/{roleId}")]
         [Transaction]
         public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
@@ -156,22 +141,6 @@ namespace FewBox.Service.Auth.Controllers
                 Payload = newId
             };
         }
-
-        [HttpDelete("{id}/roles/{roleId}")]
-        [Transaction]
-        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
-        {
-            int effect = 0;
-            var group = this.Repository.FindOne(id);
-            var principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(group.PrincipalId, roleId);
-            if(principal_Role != null)
-            {
-                effect = this.Principal_RoleRepository.Delete(principal_Role.Id);
-            }
-            return new PayloadResponseDto<int>{
-                Payload = effect
-            };
-        }
         
         [HttpGet("{id}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
@@ -179,17 +148,6 @@ namespace FewBox.Service.Auth.Controllers
             return new PayloadResponseDto<IEnumerable<RoleDto>>
             {
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByGroupId(id))
-            };
-        }
-        
-        [HttpPost("{id}/groups/{parentId}")]
-        [Transaction]
-        public PayloadResponseDto<int> ChangeParent(Guid id, Guid parentId)
-        {
-            int effect = 0;
-            effect = this.Repository.UpdateParent(id, parentId);
-            return new PayloadResponseDto<int>{
-                Payload = effect
             };
         }
     }

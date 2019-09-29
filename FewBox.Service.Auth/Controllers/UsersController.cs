@@ -141,21 +141,6 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpDelete("{id}/groups/{groupId}")]
-        [Transaction]
-        public PayloadResponseDto<int> RemoveGroup(Guid id, Guid groupId)
-        {
-            int effect = 0;
-            var group_User = this.Group_UserRepository.FindOneByGroupIdAndUserId(groupId, id);
-            if(group_User != null)
-            {
-                effect = this.Group_UserRepository.Delete(group_User.Id);
-            }
-            return new PayloadResponseDto<int>{
-                Payload = effect
-            };
-        }
-
         [HttpPut("{id}/roles/{roleId}")]
         [Transaction]
         public PayloadResponseDto<Guid> AddRole(Guid id, Guid roleId)
@@ -169,22 +154,6 @@ namespace FewBox.Service.Auth.Controllers
             }
             return new PayloadResponseDto<Guid>{
                 Payload = newId
-            };
-        }
-
-        [HttpDelete("{id}/roles/{roleId}")]
-        [Transaction]
-        public PayloadResponseDto<int> RemoveRole(Guid id, Guid roleId)
-        {
-            int effect = 0;
-            var user = this.Repository.FindOne(id);
-            var principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(user.PrincipalId, roleId);
-            if(principal_Role != null)
-            {
-                effect = this.Principal_RoleRepository.Delete(principal_Role.Id);
-            }
-            return new PayloadResponseDto<int>{
-                Payload = effect
             };
         }
         
