@@ -20,15 +20,18 @@ namespace FewBox.Service.Auth.Controllers
     {
         private IUserRepository UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
+        private IModuleRepository ModuleRepository { get; set; }
         private ITokenService TokenService { get; set; }
         private IAuthService AuthService { get; set; }
         private JWTConfig JWTConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
-        public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, ITokenService tokenService, IAuthService authService, JWTConfig jWTConfig, AuthConfig authConfig)
+        public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository,
+        ITokenService tokenService, IAuthService authService, JWTConfig jWTConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
+            this.ModuleRepository = moduleRepository;
             this.TokenService = tokenService;
             this.AuthService = authService;
             this.JWTConfig = jWTConfig;
@@ -53,7 +56,7 @@ namespace FewBox.Service.Auth.Controllers
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
                 return new PayloadResponseDto<SignInResponseDto>
                 {
-                    Payload = new SignInResponseDto { IsValid = true, Token = token }
+                    Payload = new SignInResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Key).ToList() }
                 };
             }
             return new PayloadResponseDto<SignInResponseDto>

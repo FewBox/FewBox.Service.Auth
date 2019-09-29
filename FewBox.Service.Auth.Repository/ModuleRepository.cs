@@ -10,7 +10,7 @@ namespace FewBox.Service.Auth.Repository
 {
     public class ModuleRepository : BaseRepository<Module, Guid>, IModuleRepository
     {
-        public ModuleRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
+        public ModuleRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("module", ormSession, currentUser)
         {
         }
@@ -58,6 +58,14 @@ namespace FewBox.Service.Auth.Repository
         public int UpdateParent(Guid id, Guid parentId)
         {
             return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ParentId=@ParentId where Id=@Id", new { ParentId = parentId, Id = id });
+        }
+
+        public IEnumerable<Module> FindAllByUserId(Guid userId)
+        {
+            return this.UnitOfWork.Connection.Query<Module>(
+                $@"select * from {this.TableName} where SecurityObjectId in
+                (select SecurityObjectId from role_security where RoleId in
+                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))", new { UserId = userId });
         }
     }
 }
