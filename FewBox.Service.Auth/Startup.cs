@@ -107,11 +107,11 @@ namespace FewBox.Service.Auth
                 {
                     document.Info.Version = "v1";
                     document.Info.Title = "FewBox Auth API";
-                    document.Info.Description = "A simple ASP.NET Core web API";
+                    document.Info.Description = "FewBox Auth, for more information please visit the 'https://fewbox.com'";
                     document.Info.TermsOfService = "https://fewbox.com/terms";
                     document.Info.Contact = new NSwag.SwaggerContact
                     {
-                        Name = "XL Pang",
+                        Name = "FewBox",
                         Email = "support@fewbox.com",
                         Url = "https://fewbox.com/support"
                     };
@@ -151,9 +151,9 @@ namespace FewBox.Service.Auth
             //app.UseHttpsRedirection();
             app.UseMvc();
             app.UseStaticFiles();
+            app.UseSwagger();
             if (env.IsDevelopment() || env.IsStaging())  
             {
-                app.UseSwagger();  
                 app.UseSwaggerUi3();  
             }
             else
