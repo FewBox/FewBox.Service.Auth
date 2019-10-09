@@ -65,6 +65,15 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [HttpGet("{serviceName}/{controllerName}/{actionName}")]
+        public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)
+        {
+            return new PayloadResponseDto<IList<string>>
+            {
+                Payload = this.AuthService.FindRoles(serviceName, controllerName, actionName)
+            };
+        }
+
         [HttpPost("renewtoken")]
         [Authorize("JWTRole_ControllerAction")]
         public PayloadResponseDto<RenewTokenResponseDto> RenewToken([FromBody] RenewTokenRequestDto renewTokenRequestDto)
