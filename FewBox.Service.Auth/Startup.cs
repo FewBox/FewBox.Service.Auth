@@ -40,13 +40,15 @@ namespace FewBox.Service.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(options=>{
+            services.AddMvc(options =>
+            {
                 options.Filters.Add<ExceptionAsyncFilter>();
                 options.Filters.Add<TransactionAsyncFilter>();
                 options.Filters.Add<TraceAsyncFilter>();
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.Configure<RouteOptions>(options=>{
-                options.LowercaseUrls=true;
+            services.Configure<RouteOptions>(options =>
+            {
+                options.LowercaseUrls = true;
             });
             services.AddCors();
             services.AddAutoMapper();
@@ -58,6 +60,15 @@ namespace FewBox.Service.Auth
             services.AddSingleton(jwtConfig);
             var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
             services.AddSingleton(apiConfig);
+            var externalApiConfig = this.Configuration.GetSection("ExternalApiConfig").Get<ExternalApiConfig>();
+            if (externalApiConfig != null)
+            {
+                services.AddSingleton(externalApiConfig);
+            }
+            else
+            {
+                services.AddSingleton(new ExternalApiConfig { });
+            }
             var securityConfig = this.Configuration.GetSection("SecurityConfig").Get<SecurityConfig>();
             services.AddSingleton(securityConfig);
             services.AddScoped<ITokenService, JWTToken>();
@@ -102,7 +113,8 @@ namespace FewBox.Service.Auth
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
                 };
             });
-            services.AddOpenApiDocument(config => {
+            services.AddOpenApiDocument(config =>
+            {
                 config.PostProcess = document =>
                 {
                     document.Info.Version = "v1";
@@ -123,7 +135,7 @@ namespace FewBox.Service.Auth
                 };
                 config.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT"));
                 config.DocumentProcessors.Add(
-                    new SecurityDefinitionAppender("JWT", new List<string>{"API"}, new SwaggerSecurityScheme
+                    new SecurityDefinitionAppender("JWT", new List<string> { "API" }, new SwaggerSecurityScheme
                     {
                         Type = SwaggerSecuritySchemeType.ApiKey,
                         Name = "Authorization",
@@ -152,9 +164,9 @@ namespace FewBox.Service.Auth
             app.UseMvc();
             app.UseStaticFiles();
             app.UseSwagger();
-            if (env.IsDevelopment() || env.IsStaging())  
+            if (env.IsDevelopment() || env.IsStaging())
             {
-                app.UseSwaggerUi3();  
+                app.UseSwaggerUi3();
             }
             else
             {

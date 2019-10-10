@@ -32,12 +32,13 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IServiceRepository ServiceRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
+        private ExternalApiConfig ExternalApiConfig { get; set; }
 
         public SchemaController(SecurityConfig securityConfig, IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
-            IServiceRepository serviceRepository, ApiConfig apiConfig, IMapper mapper) : base(mapper)
+            IServiceRepository serviceRepository, ApiConfig apiConfig, ExternalApiConfig externalApiConfig, IMapper mapper) : base(mapper)
         {
             this.SecurityConfig = securityConfig;
             this.PrincipalRepository = principalRepository;
@@ -52,6 +53,7 @@ namespace FewBox.Service.Auth.Controllers
             this.Principal_RoleRepository = principal_RoleRepository;
             this.ServiceRepository = serviceRepository;
             this.ApiConfig = apiConfig;
+            this.ExternalApiConfig = externalApiConfig;
         }
 
         [AllowAnonymous]
@@ -79,16 +81,37 @@ namespace FewBox.Service.Auth.Controllers
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
             Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = this.SecurityConfig.Name, Description = "Build-In Auth Service." });
-            Guid principalId = this.PrincipalRepository.Save(new Principal { Name = initRequestDto.AdminName, PrincipalType = PrincipalType.User });
-            Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, initRequestDto.Password);
+            Guid principalId = this.InitAdmin(initRequestDto.AdminName, initRequestDto.Password);
             Guid roleId = this.RoleRepository.Save(new Role { Name = "Supper Admin", Code = "R_SUPPERADMIN" });
-            // Init Api
+            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            // Init Auth Api
             foreach (var apiItem in this.ApiConfig.ApiItems)
             {
                 this.InitApi(apiItem.Controller, apiItem.Actions, serviceId, roleId);
             }
-            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            // Init External Api
+            if (this.ExternalApiConfig.ExternalApiServices != null)
+            {
+                foreach (var externalApiService in this.ExternalApiConfig.ExternalApiServices)
+                {
+                    Guid externalApiServicePrincipalId = this.InitAdmin($"{externalApiService.Name}_Admin", "FewBox");
+                    Guid externalApiServiceId = this.ServiceRepository.Save(new S.Service { Name = externalApiService.Name, Description = externalApiService.Name });
+                    Guid externalApiServiceRoleId = this.RoleRepository.Save(new Role { Name = $"{externalApiService.Name} Admin", Code = $"R_{externalApiService.Name}_SUPPERADMIN" });
+                    this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = externalApiServicePrincipalId, RoleId = externalApiServiceRoleId });
+                    foreach (var apiItem in externalApiService.ApiItems)
+                    {
+                        this.InitApi(apiItem.Controller, apiItem.Actions, externalApiServiceId, externalApiServiceRoleId);
+                    }
+                }
+            }
             return new MetaResponseDto { };
+        }
+
+        private Guid InitAdmin(string name, string password)
+        {
+            Guid principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
+            Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, password);
+            return principalId;
         }
 
         private void InitApi(string controller, string[] actions, Guid serviceId, Guid roleId)
