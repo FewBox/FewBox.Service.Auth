@@ -16,6 +16,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "JWTRole_ControllerAction")]
     public class AuthController : ControllerBase
     {
         private IUserRepository UserRepository { get; set; }
@@ -38,6 +39,7 @@ namespace FewBox.Service.Auth.Controllers
             this.AuthConfig = authConfig;
         }
 
+        [AllowAnonymous]
         [HttpPost("signin")]
         public PayloadResponseDto<SignInResponseDto> SignIn([FromBody]SignInRequestDto signInRequestDto)
         {
@@ -65,6 +67,7 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [AllowAnonymous]
         [HttpGet("{serviceName}/{controllerName}/{actionName}")]
         public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)
         {
@@ -75,7 +78,6 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [HttpPost("renewtoken")]
-        [Authorize("JWTRole_ControllerAction")]
         public PayloadResponseDto<RenewTokenResponseDto> RenewToken([FromBody] RenewTokenRequestDto renewTokenRequestDto)
         {
             var claims = this.HttpContext.User.Claims.Where(
@@ -95,7 +97,6 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [HttpGet("currentuser")]
-        [Authorize("JWTRole_ControllerAction")]
         public object GetCurrentClaims()
         {
             int i = this.User.Claims.Count();

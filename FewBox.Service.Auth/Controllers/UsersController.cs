@@ -117,6 +117,20 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [HttpPost("changepassword")]
+        [Transaction]
+        public MetaResponseDto ChangePassword([FromBody] ChangePasswordRequestDto changePasswordRequestDto)
+        {
+            // Todo: 
+            string email = null;
+            if (String.IsNullOrEmpty(email))
+            {
+                return new MetaResponseDto { IsSuccessful = false };
+            }
+            this.Repository.ResetPassword(email, changePasswordRequestDto.Password);
+            return new MetaResponseDto { };
+        }
+
         [HttpPut("{id}/resetpassword")]
         [Transaction]
         public MetaResponseDto ResetPassword(Guid id, [FromBody] ResetPasswordRequestDto resetPasswordRequestDto)

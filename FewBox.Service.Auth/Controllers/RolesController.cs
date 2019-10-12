@@ -10,14 +10,11 @@ using Microsoft.AspNetCore.Authorization;
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Policy="JWTRole_ControllerAction")]
+    [Authorize(Policy = "JWTRole_ControllerAction")]
     public class RolesController : ResourcesController<IRoleRepository, Role, Guid, RoleDto, RolePersistantDto>
     {
-        private IGroupRepository GroupRepository { get; set; }
-        public RolesController(IRoleRepository roleRepository, IGroupRepository groupRepository,
-        IMapper mapper) : base(roleRepository, mapper)
+        public RolesController(IRoleRepository roleRepository, IMapper mapper) : base(roleRepository, mapper)
         {
-            this.GroupRepository = groupRepository;
         }
     }
 }
