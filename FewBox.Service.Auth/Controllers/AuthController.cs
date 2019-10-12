@@ -22,19 +22,21 @@ namespace FewBox.Service.Auth.Controllers
         private IUserRepository UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
         private IModuleRepository ModuleRepository { get; set; }
+        private IApiRepository ApiRepository { get; set; }
+        private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
         private ITokenService TokenService { get; set; }
-        private IAuthService AuthService { get; set; }
         private JWTConfig JWTConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository,
-        ITokenService tokenService, IAuthService authService, JWTConfig jWTConfig, AuthConfig authConfig)
+        IApiRepository apiRepository, IRole_SecurityObjectRepository role_SecurityObjectRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
             this.ModuleRepository = moduleRepository;
+            this.ApiRepository = apiRepository;
+            this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
             this.TokenService = tokenService;
-            this.AuthService = authService;
             this.JWTConfig = jWTConfig;
             this.AuthConfig = authConfig;
         }
@@ -71,9 +73,23 @@ namespace FewBox.Service.Auth.Controllers
         [HttpGet("{serviceName}/{controllerName}/{actionName}")]
         public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)
         {
+            var apiRoles = new List<string>();
+            var api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceName, controllerName, actionName);
+            if (api != null)
+            {
+                var role_SecurityObjects = this.Role_SecurityObjectRepository.FindAllBySecurityId(api.SecurityObjectId);
+                if (role_SecurityObjects != null)
+                {
+                    foreach (var role_SecurityObject in role_SecurityObjects)
+                    {
+                        var role = this.RoleRepository.FindOne(role_SecurityObject.RoleId);
+                        apiRoles.Add(role.Code);
+                    }
+                }
+            }
             return new PayloadResponseDto<IList<string>>
             {
-                Payload = this.AuthService.FindRoles(serviceName, controllerName, actionName)
+                Payload = apiRoles
             };
         }
 
