@@ -25,39 +25,84 @@ using NSwag;
 using NSwag.SwaggerGeneration.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
 using Microsoft.AspNetCore.Routing;
+using FewBox.Core.Web.Error;
+using FewBox.Core.Utility.Net;
+using FewBox.Core.Utility.Formatter;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Newtonsoft.Json;
 
 namespace FewBox.Service.Auth
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             Configuration = configuration;
+            this.HostingEnvironment = hostingEnvironment;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostingEnvironment HostingEnvironment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(options =>
-            {
-                options.Filters.Add<ExceptionAsyncFilter>();
+            RestfulUtility.IsCertificateNeedValidate = false;
+            RestfulUtility.IsLogging = true; // Todo: Need to remove.
+            JsonUtility.IsCamelCase = true;
+            JsonUtility.IsNullIgnore = true;
+            HttpUtility.IsCertificateNeedValidate = false;
+            HttpUtility.IsEnsureSuccessStatusCode = false;
+            services.AddRouting(options => options.LowercaseUrls = true);
+            services.AddMvc(options=>{
+                if (this.HostingEnvironment.EnvironmentName != "Test")
+                {
+                    options.Filters.Add<ExceptionAsyncFilter>();
+                }
+                if (this.HostingEnvironment.EnvironmentName == "Development")
+                {
+                    options.Filters.Add(new AllowAnonymousFilter());
+                }
                 options.Filters.Add<TransactionAsyncFilter>();
                 options.Filters.Add<TraceAsyncFilter>();
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.Configure<RouteOptions>(options =>
-            {
-                options.LowercaseUrls = true;
-            });
-            services.AddCors();
+            })
+            .AddJsonOptions(options=>{
+                options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+            })
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddCors(
+                options =>
+                {
+                    options.AddDefaultPolicy(
+                        builder =>
+                        {
+                            builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins("https://fewbox.com").AllowAnyMethod().AllowAnyHeader();
+                        });
+                    options.AddPolicy("all",
+                        builder =>
+                        {
+                            builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                        });
+
+                });
             services.AddAutoMapper();
             services.AddMemoryCache();
             services.AddRouting(options => options.LowercaseUrls = true);
-            var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
-            services.AddSingleton(authConfig);
+            services.AddSingleton<IExceptionProcessorService, ExceptionProcessorService>();
+            // Used for Config.
+            // Used for [Authorize(Policy="JWTRole_ControllerAction")].
             var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
             services.AddSingleton(jwtConfig);
+            var securityConfig = this.Configuration.GetSection("SecurityConfig").Get<SecurityConfig>();
+            services.AddSingleton(securityConfig);
+            var healthyConfig = this.Configuration.GetSection("HealthyConfig").Get<HealthyConfig>();
+            services.AddSingleton(healthyConfig);
+            var logConfig = this.Configuration.GetSection("LogConfig").Get<LogConfig>();
+            services.AddSingleton(logConfig);
+            var notificationConfig = this.Configuration.GetSection("NotificationConfig").Get<NotificationConfig>();
+            services.AddSingleton(notificationConfig);
+            var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
+            services.AddSingleton(authConfig);
             var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
             services.AddSingleton(apiConfig);
             var externalApiConfig = this.Configuration.GetSection("ExternalApiConfig").Get<ExternalApiConfig>();
@@ -69,15 +114,16 @@ namespace FewBox.Service.Auth
             {
                 services.AddSingleton(new ExternalApiConfig { });
             }
-            var securityConfig = this.Configuration.GetSection("SecurityConfig").Get<SecurityConfig>();
-            services.AddSingleton(securityConfig);
-            services.AddScoped<ITokenService, JWTToken>();
+            // Used for RBAC AOP.
             services.AddScoped<IAuthorizationHandler, RoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
             services.AddScoped<IAuthService, LocalAuthService>();
+            // Used for ORM.
             services.AddScoped<IOrmConfiguration, AppSettingOrmConfiguration>();
-            services.AddScoped<IOrmSession, MySqlSession>();
+            services.AddScoped<IOrmSession, MySqlSession>(); // Note: MySql
+            // services.AddScoped<IOrmSession, SQLiteSession>(); // Note: SQLite
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
+            // Used for Application.
             services.AddScoped<IServiceRepository, ServiceRepository>();
             services.AddScoped<IPrincipalRepository, PrincipalRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
@@ -91,14 +137,16 @@ namespace FewBox.Service.Auth
             services.AddScoped<IGroup_UserRepository, Group_UserRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
-            services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
-            services.AddScoped<ITraceHandler, ConsoleTraceHandler>();
+            // Used for Exception&Log AOP.
+            // services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
+            // services.AddScoped<ITraceHandler, ConsoleTraceHandler>();
+            services.AddScoped<IExceptionHandler, ServiceExceptionHandler>();
+            services.AddScoped<ITraceHandler, ServiceTraceHandler>();
+            // Used for IHttpContextAccessor&IActionContextAccessor context.
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
-            services.AddScoped<IAppService, AppService>();
-            // Used for Config.
-            var healthyConfig = this.Configuration.GetSection("HealthyConfig").Get<HealthyConfig>();
-            services.AddSingleton(healthyConfig);
+            // Used for JWT.
+            services.AddScoped<ITokenService, JWTToken>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -159,20 +207,21 @@ namespace FewBox.Service.Auth
                 app.UseHsts();
             }
 
-            app.UseAuthentication();
-            //app.UseHttpsRedirection();
-            app.UseMvc();
+            //app.UseAuthentication();
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSwagger();
             if (env.IsDevelopment() || env.IsStaging())
             {
+                app.UseCors("all");
                 app.UseSwaggerUi3();
             }
             else
             {
+                app.UseCors("all");
                 app.UseReDoc();
             }
-            app.UseCors();
+            app.UseMvc();
         }
     }
 }
