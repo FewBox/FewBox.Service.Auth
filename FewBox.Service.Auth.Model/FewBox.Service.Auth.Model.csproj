@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="FewBox.Core.Persistence" Version="1.0.37" />
-    <PackageReference Include="FewBox.Core.Web" Version="1.0.68" />
+    <PackageReference Include="FewBox.Core.Web" Version="1.0.69" />
   </ItemGroup>
 
 </Project>

@@ -30,6 +30,8 @@ using FewBox.Core.Utility.Net;
 using FewBox.Core.Utility.Formatter;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Newtonsoft.Json;
+using FewBox.Core.Web.Log;
+using FewBox.Core.Web.Notification;
 
 namespace FewBox.Service.Auth
 {
@@ -138,10 +140,11 @@ namespace FewBox.Service.Auth
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
             // Used for Exception&Log AOP.
-            // services.AddScoped<IExceptionHandler, ConsoleExceptionHandler>();
-            // services.AddScoped<ITraceHandler, ConsoleTraceHandler>();
-            services.AddScoped<IExceptionHandler, ServiceExceptionHandler>();
-            services.AddScoped<ITraceHandler, ServiceTraceHandler>();
+            // services.AddScoped<ILogHandler, ConsoleLogHandler>();
+            // services.AddScoped<INotificationHandler, ConsoleNotificationHandler>();
+            services.AddScoped<ILogHandler, ServiceLogHandler>();
+            services.AddScoped<INotificationHandler, ServiceNotificationHandler>();
+            services.AddScoped<ITryCatchService, TryCatchService>();
             // Used for IHttpContextAccessor&IActionContextAccessor context.
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
