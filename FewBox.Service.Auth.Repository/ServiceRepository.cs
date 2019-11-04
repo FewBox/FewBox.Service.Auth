@@ -15,6 +15,18 @@ namespace FewBox.Service.Auth.Repository
         {
         }
 
+        public S.Service FindOneByName(string name)
+        {
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<S.Service>($"select * from {this.TableName} where Name = @Name",
+                new { Name = name });
+        }
+
+        public bool IsExist(string name)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name",
+                new { Name = name }) > 0;
+        }
+
         protected override string GetSaveSegmentSql()
         {
             return "Name,Description";

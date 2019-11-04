@@ -12,6 +12,12 @@ using Microsoft.AspNetCore.Authorization;
 using FewBox.Service.Auth.Model.Configs;
 using S = FewBox.Service.Auth.Model.Entities;
 using FewBox.Core.Web.Config;
+using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using System.Linq;
+using FewBox.Core.Web.Error;
+using FewBox.Core.Utility.Net;
+using System.Text;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -33,12 +39,15 @@ namespace FewBox.Service.Auth.Controllers
         private IServiceRepository ServiceRepository { get; set; }
         private ApiConfig ApiConfig { get; set; }
         private ExternalApiConfig ExternalApiConfig { get; set; }
+        private NotificationConfig NotificationConfig { get; set; }
+        private ITryCatchService TryCatchService { get; set; }
 
         public SchemaController(SecurityConfig securityConfig, IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
-            IServiceRepository serviceRepository, ApiConfig apiConfig, ExternalApiConfig externalApiConfig, IMapper mapper) : base(mapper)
+            IServiceRepository serviceRepository, ApiConfig apiConfig, ExternalApiConfig externalApiConfig, NotificationConfig notificationConfig,
+            ITryCatchService tryCatchService, IMapper mapper) : base(mapper)
         {
             this.SecurityConfig = securityConfig;
             this.PrincipalRepository = principalRepository;
@@ -54,6 +63,8 @@ namespace FewBox.Service.Auth.Controllers
             this.ServiceRepository = serviceRepository;
             this.ApiConfig = apiConfig;
             this.ExternalApiConfig = externalApiConfig;
+            this.NotificationConfig = notificationConfig;
+            this.TryCatchService = tryCatchService;
         }
 
         [AllowAnonymous]
@@ -72,6 +83,7 @@ namespace FewBox.Service.Auth.Controllers
         [Transaction]
         public MetaResponseDto Init([FromBody]InitRequestDto initRequestDto)
         {
+            // Validate Inited.
             if (this.UserRepository.Count() > 0)
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
@@ -80,41 +92,161 @@ namespace FewBox.Service.Auth.Controllers
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
-            Guid serviceId = this.ServiceRepository.Save(new S.Service { Name = this.SecurityConfig.Name, Description = "Build-In Auth Service." });
-            Guid principalId = this.InitAdmin(initRequestDto.AdminName, initRequestDto.Password);
-            Guid roleId = this.RoleRepository.Save(new Role { Name = "Supper Admin", Code = "R_SUPPERADMIN" });
-            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
-            // Init Auth Api
+
+            // 1. Service
+            Guid serviceId = this.InitService(this.SecurityConfig.Name, "Build-In Auth Service.");
+            // 2. Principal
+            Guid principalId = this.InitUser(initRequestDto.AdminName, initRequestDto.Password);
+            // 3. Role
+            Guid roleId = this.InitRole("Solution Admin", "R_SOLUTIONADMIN");
+            // 4. Bind Principal & Role
+            this.GrantRole(principalId, roleId);
+            // 5. Bind Api & Role
             foreach (var apiItem in this.ApiConfig.ApiItems)
             {
-                this.InitApi(apiItem.Controller, apiItem.Actions, serviceId, roleId);
+                this.InitApiAndGrantPermission(apiItem.Controller, apiItem.Actions, serviceId, roleId);
             }
-            // Init External Api
+            // Init External Service Admin
+            IDictionary<string, string> passwords = new Dictionary<string, string>();
             if (this.ExternalApiConfig.ExternalApiServices != null)
             {
                 foreach (var externalApiService in this.ExternalApiConfig.ExternalApiServices)
                 {
-                    Guid externalApiServicePrincipalId = this.InitAdmin($"{externalApiService.Name}_Admin", "FewBox");
-                    Guid externalApiServiceId = this.ServiceRepository.Save(new S.Service { Name = externalApiService.Name, Description = externalApiService.Name });
-                    Guid externalApiServiceRoleId = this.RoleRepository.Save(new Role { Name = $"{externalApiService.Name} Admin", Code = $"R_{externalApiService.Name}_SUPPERADMIN" });
-                    this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = externalApiServicePrincipalId, RoleId = externalApiServiceRoleId });
+                    // 1. Service
+                    Guid externalApiServiceId = this.InitService(externalApiService.Name, externalApiService.Name);
+                    // 2. Principal
+                    string username = $"{externalApiService.Name}_Admin";
+                    string password = this.GetRandomPassword();
+                    passwords.Add(username, password);
+                    Guid externalApiServicePrincipalId = this.InitUser(username, password);
+                    // 3. Role
+                    Guid externalApiServiceRoleId = this.InitRole($"{externalApiService.Name} Admin", $"R_{externalApiService.Name}_SERVICEADMIN");
+                    // 4. Bind Principal & Role
+                    this.GrantRole(externalApiServicePrincipalId, externalApiServiceRoleId);
+                    // 5. Bind Api & Role
                     foreach (var apiItem in externalApiService.ApiItems)
                     {
-                        this.InitApi(apiItem.Controller, apiItem.Actions, externalApiServiceId, externalApiServiceRoleId);
+                        this.InitApiAndGrantPermission(apiItem.Controller, apiItem.Actions, externalApiServiceId, externalApiServiceRoleId);
                     }
                 }
             }
+            this.SendPassword(passwords);
             return new MetaResponseDto { };
         }
 
-        private Guid InitAdmin(string name, string password)
+        [HttpPost("batchinit")]
+        [Transaction]
+        [Trace]
+        public MetaResponseDto BatchInit([FromBody]BatchInitRequestDto batchInitRequestDto)
         {
-            Guid principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
-            Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, password);
+            // 1. Service
+            Guid serviceId = this.InitService(batchInitRequestDto.Service, batchInitRequestDto.Service);
+            // 2. Role
+            Guid roleId = this.InitRole(batchInitRequestDto.RoleName, batchInitRequestDto.RoleCode);
+            IDictionary<string, string> passwords = new Dictionary<string, string>();
+            foreach (string username in batchInitRequestDto.Usernames)
+            {
+                // 3. Principal
+                string password = this.GetRandomPassword();
+                Guid principalId = this.InitUser(username, password);
+                passwords.Add(username, password);
+                // 4. Bind Principal & Role
+                this.GrantRole(principalId, roleId);
+            }
+            // 5. Bind Api & Role
+            foreach (var apiItem in batchInitRequestDto.ApiItems)
+            {
+                this.InitApiAndGrantPermission(apiItem.Controller, apiItem.Actions, serviceId, roleId);
+            }
+            this.SendPassword(passwords);
+            return new MetaResponseDto { };
+        }
+
+        private string GetRandomPassword(PasswordOptions passwordOptions = null)
+        {
+            if (passwordOptions == null)
+            {
+                passwordOptions = new PasswordOptions()
+                {
+                    RequiredLength = 8,
+                    RequiredUniqueChars = 4,
+                    RequireDigit = true,
+                    RequireLowercase = true,
+                    RequireNonAlphanumeric = true,
+                    RequireUppercase = true
+                };
+            }
+
+            string[] randomChars = new[] {
+                "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
+                "abcdefghijkmnopqrstuvwxyz",    // lowercase
+                "0123456789",                   // digits
+                "!@$?_-#"                        // non-alphanumeric
+            };
+            Random rand = new Random(Environment.TickCount);
+            List<char> chars = new List<char>();
+
+            if (passwordOptions.RequireUppercase)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[0][rand.Next(0, randomChars[0].Length)]);
+
+            if (passwordOptions.RequireLowercase)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[1][rand.Next(0, randomChars[1].Length)]);
+
+            if (passwordOptions.RequireDigit)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[2][rand.Next(0, randomChars[2].Length)]);
+
+            if (passwordOptions.RequireNonAlphanumeric)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[3][rand.Next(0, randomChars[3].Length)]);
+
+            for (int i = chars.Count; i < passwordOptions.RequiredLength
+                || chars.Distinct().Count() < passwordOptions.RequiredUniqueChars; i++)
+            {
+                string rcs = randomChars[rand.Next(0, randomChars.Length)];
+                chars.Insert(rand.Next(0, chars.Count),
+                    rcs[rand.Next(0, rcs.Length)]);
+            }
+            return new string(chars.ToArray());
+        }
+
+        private Guid InitUser(string name, string password)
+        {
+            Guid principalId;
+            if (this.PrincipalRepository.IsExist(name))
+            {
+                principalId = this.PrincipalRepository.FindOneByName(name).Id;
+            }
+            else
+            {
+                principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
+                Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, password);
+            }
             return principalId;
         }
 
-        private void InitApi(string controller, string[] actions, Guid serviceId, Guid roleId)
+        private Guid InitRole(string name, string code)
+        {
+            Guid roleId;
+            if (this.RoleRepository.IsExist(name))
+            {
+                roleId = this.RoleRepository.FindOneByName(name).Id;
+            }
+            else
+            {
+                roleId = this.RoleRepository.Save(new Role { Name = name, Code = code });
+            }
+            return roleId;
+        }
+
+        private void GrantRole(Guid principalId, Guid roleId)
+        {
+            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+        }
+
+        private void InitApiAndGrantPermission(string controller, string[] actions, Guid serviceId, Guid roleId)
         {
             foreach (string action in actions)
             {
@@ -123,6 +255,48 @@ namespace FewBox.Service.Auth.Controllers
                 var usersApi = this.ApiRepository.FindOne(usersApiId);
                 this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = usersApi.SecurityObjectId });
             }
+        }
+
+        private Guid InitService(string name, string description)
+        {
+            Guid serviceid;
+            if (this.ServiceRepository.IsExist(name))
+            {
+                serviceid = this.ServiceRepository.FindOneByName(name).Id;
+            }
+            else
+            {
+                serviceid = this.ServiceRepository.Save(new S.Service { Name = name, Description = description });
+            }
+            return serviceid;
+        }
+
+        private void InitApi(Guid serviceId, string controller, string action)
+        {
+            Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = $"{controller}_{action}" });
+            Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId = securityObjectId, Controller = controller, Action = action });
+        }
+
+        private void SendPassword(IDictionary<string, string> passwords)
+        {
+            string name = "Password";
+            StringBuilder param = new StringBuilder();
+            foreach (var password in passwords)
+            {
+                param.AppendLine($"{password.Key} : {password.Value}");
+            }
+            this.TryCatchService.TryCatchWithoutNotification(() =>
+                {
+                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.NotificationConfig.Protocol}://{this.NotificationConfig.Host}:{this.NotificationConfig.Port}/api/notification", new Package<NotificationRequestDto>
+                    {
+                        Headers = new List<Header> { },
+                        Body = new NotificationRequestDto
+                        {
+                            Name = name,
+                            Param = param.ToString()
+                        }
+                    });
+                });
         }
     }
 }

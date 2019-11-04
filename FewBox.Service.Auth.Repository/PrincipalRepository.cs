@@ -8,7 +8,7 @@ namespace FewBox.Service.Auth.Repository
 {
     public class PrincipalRepository : BaseRepository<Principal, Guid>, IPrincipalRepository
     {
-        public PrincipalRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
+        public PrincipalRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("principal", ormSession, currentUser)
         {
         }
@@ -17,6 +17,12 @@ namespace FewBox.Service.Auth.Repository
         {
             return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name",
                 new { Name = name }) > 0;
+        }
+
+        public Principal FindOneByName(string name)
+        {
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Principal>($"select * from {this.TableName} where Name = @Name",
+                new { Name = name });
         }
 
         protected override string GetSaveSegmentSql()
