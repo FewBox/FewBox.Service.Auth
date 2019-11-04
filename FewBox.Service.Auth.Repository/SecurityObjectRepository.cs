@@ -13,6 +13,18 @@ namespace FewBox.Service.Auth.Repository
         {
         }
 
+        public SecurityObject FindOneByName(string name)
+        {
+             return this.UnitOfWork.Connection.QuerySingleOrDefault<SecurityObject>($"select * from {this.TableName} where Name = @Name",
+                new { Name = name });
+        }
+
+        public bool IsExist(string name)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name",
+                new { Name = name }) > 0;
+        }
+
         public int UpdateServiceId(Guid id, Guid serviceId)
         {
             return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ServiceId=@ServiceId where Id=@Id", new { ServiceId = serviceId, Id = id});

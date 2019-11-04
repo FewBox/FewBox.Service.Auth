@@ -11,9 +11,9 @@ namespace FewBox.Service.Auth.Model.Dtos
         public string RoleName { get; set; }
         [Required(ErrorMessage = "RoleCode is required.")]
         public string RoleCode { get; set; }
-        [Required(ErrorMessage = "ApiItems are required.")]
-        public IList<ApiItemDto> ApiItems{get;set;}
         [Required(ErrorMessage = "Usernames are required.")]
         public IList<string> Usernames { get; set; }
+        public IList<ApiItemDto> ApiItems { get; set; }
+        public IList<ModuleItemDto> ModuleItems { get; set; }
     }
 }

@@ -39,7 +39,7 @@ namespace FewBox.Service.Auth.Controllers
             var rootModules = this.Repository.FindAllByRoot();
             foreach (var module in rootModules)
             {
-                var moduleDto = this.ModuleService.GetTree(module.Key);
+                var moduleDto = this.ModuleService.GetTree(module.Code);
                 modules.Add(moduleDto);
             }
             return new PayloadResponseDto<IEnumerable<ModuleDto>>

@@ -42,12 +42,12 @@ namespace FewBox.Service.Auth.Repository
 
         protected override string GetSaveSegmentSql()
         {
-            return "`Key`,ParentId,SecurityObjectId";
+            return "`Code`,ParentId,SecurityObjectId";
         }
 
         protected override string GetUpdateSegmentSql()
         {
-            return "`Key`,ParentId";
+            return "`Code`,ParentId";
         }
 
         protected override string GetUpdateWithUniqueKeyWhereSegmentSql()
@@ -66,6 +66,18 @@ namespace FewBox.Service.Auth.Repository
                 $@"select * from {this.TableName} where SecurityObjectId in
                 (select SecurityObjectId from role_security where RoleId in
                 (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))", new { UserId = userId });
+        }
+
+        public bool IsExist(Guid serviceId, string code)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Code=@Code and SecurityObjectId in (select Id from securityobject where ServiceId = @ServiceId)",
+                new { Code = code, ServiceId = serviceId }) > 0;
+        }
+
+        public Module FindOneByServiceAndCode(Guid serviceId, string code)
+        {
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select count(1) from {this.TableName} where Code=@Code and SecurityObjectId in (select Id from securityobject where ServiceId = @ServiceId)",
+                new { Code = code, ServiceId = serviceId });
         }
     }
 }

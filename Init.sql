@@ -149,7 +149,7 @@ CREATE TABLE `group_user_recycle` (
 DROP TABLE IF EXISTS `module`;
 CREATE TABLE `module` (
   `Id` char(36) NOT NULL,
-  `Key` varchar(45) DEFAULT NULL,
+  `Code` varchar(45) DEFAULT NULL,
   `ParentId` char(36) DEFAULT NULL,
   `SecurityObjectId` char(36) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
@@ -169,7 +169,7 @@ CREATE TABLE `module` (
 DROP TABLE IF EXISTS `module_recycle`;
 CREATE TABLE `module_recycle` (
   `Id` char(36) NOT NULL,
-  `Key` varchar(45) DEFAULT NULL,
+  `Code` varchar(45) DEFAULT NULL,
   `ParentId` char(36) DEFAULT NULL,
   `SecurityObjectId` char(36) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,

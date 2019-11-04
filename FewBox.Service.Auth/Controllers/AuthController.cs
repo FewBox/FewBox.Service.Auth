@@ -60,7 +60,7 @@ namespace FewBox.Service.Auth.Controllers
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
                 return new PayloadResponseDto<SignInResponseDto>
                 {
-                    Payload = new SignInResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Key).ToList() }
+                    Payload = new SignInResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
                 };
             }
             return new PayloadResponseDto<SignInResponseDto>

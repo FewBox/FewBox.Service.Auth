@@ -6,7 +6,6 @@ using FewBox.Core.Web.Controller;
 using FewBox.Core.Web.Filter;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using FewBox.Core.Web.Security;
 using FewBox.Core.Web.Dto;
 using Microsoft.AspNetCore.Authorization;
 using FewBox.Service.Auth.Model.Configs;
@@ -83,7 +82,7 @@ namespace FewBox.Service.Auth.Controllers
         [Transaction]
         public MetaResponseDto Init([FromBody]InitRequestDto initRequestDto)
         {
-            // Validate Inited.
+            # region Validate Inited.
             if (this.UserRepository.Count() > 0)
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
@@ -92,7 +91,9 @@ namespace FewBox.Service.Auth.Controllers
             {
                 return new MetaResponseDto { IsSuccessful = false, ErrorCode = "ADMIN_EXIST", ErrorMessage = "The administrator is exist, please sign in." };
             }
+            #endregion
 
+            # region API Init.
             // 1. Service
             Guid serviceId = this.InitService(this.SecurityConfig.Name, "Build-In Auth Service.");
             // 2. Principal
@@ -131,6 +132,7 @@ namespace FewBox.Service.Auth.Controllers
                 }
             }
             this.SendPassword(passwords);
+            #endregion
             return new MetaResponseDto { };
         }
 
@@ -154,9 +156,20 @@ namespace FewBox.Service.Auth.Controllers
                 this.GrantRole(principalId, roleId);
             }
             // 5. Bind Api & Role
-            foreach (var apiItem in batchInitRequestDto.ApiItems)
+            if (batchInitRequestDto.ApiItems != null)
             {
-                this.InitApiAndGrantPermission(apiItem.Controller, apiItem.Actions, serviceId, roleId);
+                foreach (var apiItem in batchInitRequestDto.ApiItems)
+                {
+                    this.InitApiAndGrantPermission(apiItem.Controller, apiItem.Actions, serviceId, roleId);
+                }
+            }
+            // 6. Bind Module & Role
+            if (batchInitRequestDto.ModuleItems != null)
+            {
+                foreach (var moduleItemDto in batchInitRequestDto.ModuleItems)
+                {
+                    this.InitModuleAndGrantPermission(moduleItemDto, serviceId, roleId);
+                }
             }
             this.SendPassword(passwords);
             return new MetaResponseDto { };
@@ -243,17 +256,54 @@ namespace FewBox.Service.Auth.Controllers
 
         private void GrantRole(Guid principalId, Guid roleId)
         {
-            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            if (this.Principal_RoleRepository.IsExist(principalId, roleId))
+            {
+                // Do Nothing.
+            }
+            else
+            {
+                this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            }
         }
 
-        private void InitApiAndGrantPermission(string controller, string[] actions, Guid serviceId, Guid roleId)
+        private void InitApiAndGrantPermission(string controller, IList<string> actions, Guid serviceId, Guid roleId)
         {
             foreach (string action in actions)
             {
-                Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = $"{controller}_{action}" });
-                Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId = securityObjectId, Controller = controller, Action = action });
-                var usersApi = this.ApiRepository.FindOne(usersApiId);
-                this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = usersApi.SecurityObjectId });
+                Guid securityObjectId = this.InitSecurityObject(serviceId, $"{controller}_{action}");
+                Guid apiId = this.InitApi(serviceId, securityObjectId, controller, action);
+                if (this.Role_SecurityObjectRepository.IsExist(roleId, securityObjectId))
+                {
+                    // Do Nothing.
+                }
+                else
+                {
+                    this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = securityObjectId });
+                }
+            }
+        }
+
+        private void InitModuleAndGrantPermission(ModuleItemDto moduleItemDto, Guid serviceId, Guid roleId)
+        {
+            if (moduleItemDto != null)
+            {
+                Guid securityObjectId = this.InitSecurityObject(serviceId, $"{moduleItemDto.Name}_{moduleItemDto.Code}");
+                Guid moduleId = this.InitModule(serviceId, securityObjectId, moduleItemDto.Name, moduleItemDto.Code);
+                if (this.Role_SecurityObjectRepository.IsExist(roleId, securityObjectId))
+                {
+                    // Do Nothing.
+                }
+                else
+                {
+                    this.Role_SecurityObjectRepository.Save(new Role_SecurityObject { RoleId = roleId, SecurityObjectId = securityObjectId });
+                }
+                if (moduleItemDto.Children != null)
+                {
+                    foreach (var childModuleItemDto in moduleItemDto.Children)
+                    {
+                        this.InitModuleAndGrantPermission(childModuleItemDto, serviceId, roleId);
+                    }
+                }
             }
         }
 
@@ -271,10 +321,46 @@ namespace FewBox.Service.Auth.Controllers
             return serviceid;
         }
 
-        private void InitApi(Guid serviceId, string controller, string action)
+        private Guid InitSecurityObject(Guid serviceId, string name)
         {
-            Guid securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = $"{controller}_{action}" });
-            Guid usersApiId = this.ApiRepository.Save(new Api { SecurityObjectId = securityObjectId, Controller = controller, Action = action });
+            Guid securityObjectId;
+            if (this.SecurityObjectRepository.IsExist(name))
+            {
+                securityObjectId = this.SecurityObjectRepository.FindOneByName(name).Id;
+            }
+            else
+            {
+                securityObjectId = this.SecurityObjectRepository.Save(new SecurityObject { ServiceId = serviceId, Name = name });
+            }
+            return securityObjectId;
+        }
+
+        private Guid InitApi(Guid serviceId, Guid securityObjectId, string controller, string action)
+        {
+            Guid apiId;
+            if (this.ApiRepository.IsExist(serviceId, controller, action))
+            {
+                apiId = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceId, controller, action).Id;
+            }
+            else
+            {
+                apiId = this.ApiRepository.Save(new Api { SecurityObjectId = securityObjectId, Controller = controller, Action = action });
+            }
+            return apiId;
+        }
+
+        private Guid InitModule(Guid serviceId, Guid securityObjectId, string name, string code)
+        {
+            Guid moduleId;
+            if (this.ModuleRepository.IsExist(serviceId, code))
+            {
+                moduleId = this.ModuleRepository.FindOneByServiceAndCode(serviceId, code).Id;
+            }
+            else
+            {
+                moduleId = this.ModuleRepository.Save(new Module { SecurityObjectId = securityObjectId, Name = name, Code = code });
+            }
+            return moduleId;
         }
 
         private void SendPassword(IDictionary<string, string> passwords)

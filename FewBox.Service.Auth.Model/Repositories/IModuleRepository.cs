@@ -7,6 +7,8 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface IModuleRepository : IBaseRepository<Module, Guid>
     {
+        bool IsExist(Guid serviceId, string code);
+        Module FindOneByServiceAndCode(Guid serviceId, string code);
         IEnumerable<Module> FindAllByRoot();
         IEnumerable<Module> FindAllByParent(Guid parentId);
         IEnumerable<Module> FindAllByUserId(Guid userId);
