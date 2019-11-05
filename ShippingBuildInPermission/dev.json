@@ -1,0 +1,99 @@
+{
+  "service": "Shipping",
+  "roleName": "Dev",
+  "roleCode": "R_Shipping_SERVICEDEV",
+  "usernames": [
+    "pangxiaoliang_dev"
+  ],
+  "apiItems": [
+    {
+      "controller": "Nodes",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery"
+      ]
+    },
+    {
+      "controller": "Pods",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery"
+      ]
+    },
+    {
+      "controller": "Services",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery"
+      ]
+    },
+    {
+      "controller": "VirtualServices",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery"
+      ]
+    },
+    {
+      "controller": "Namespaces",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery"
+      ]
+    }
+  ],
+  "moduleItems": [
+    {
+      "name": "Node",
+      "code": "M_Shipping_MODULENODE",
+      "children": [
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULENODE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Service",
+      "code": "M_Shipping_MODULSERVICE",
+      "children": [
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULSERVICE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pod",
+      "code": "M_Shipping_MODULEPOD",
+      "children": [
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEPOD_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "VirtualService",
+      "code": "M_Shipping_MODULEVIRTUALSERVICE",
+      "children": [
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEVIRTUALSERVICE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

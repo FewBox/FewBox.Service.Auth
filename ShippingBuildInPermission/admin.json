@@ -1,0 +1,356 @@
+{
+  "service": "Shipping",
+  "roleName": "Shipping Admin",
+  "roleCode": "R_Shipping_SUPPERADMIN",
+  "usernames": [
+    "pangxiaoliang"
+  ],
+  "apiItems": [
+    {
+      "controller": "ConfigMaps",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Deployments",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "DestinationRules",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Gateways",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Namespaces",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete",
+        "GetServiceAccounts",
+        "GetSecrets",
+        "GetGateways",
+        "GetServices"
+      ]
+    },
+    {
+      "controller": "Nodes",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Pods",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Secrets",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "ServiceAccounts",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "ServiceEntries",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "Services",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    },
+    {
+      "controller": "VirtualServices",
+      "actions": [
+        "Get",
+        "GetFewBoxDelivery",
+        "Post",
+        "Patch",
+        "Delete"
+      ]
+    }
+  ],
+  "moduleItems": [
+    {
+      "name": "Node",
+      "code": "M_Shipping_MODULENODE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULENODE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULENODE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Namespace",
+      "code": "M_Shipping_MODULENAMESPACE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULENAMESPACE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULENAMESPACE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ServiceAccount",
+      "code": "M_Shipping_MODULESERVICEACCOUNT",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULESERVICEACCOUNT_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULESERVICEACCOUNT_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Secret",
+      "code": "M_Shipping_MODULESECRET",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULESECRET_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULESECRET_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Service",
+      "code": "M_Shipping_MODULSERVICE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULSERVICE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULSERVICE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Deployment",
+      "code": "M_Shipping_MODULEDEPLOYMENT",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEDEPLOYMENT_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEDEPLOYMENT_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pod",
+      "code": "M_Shipping_MODULEPOD",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEPOD_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEPOD_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Job",
+      "code": "M_Shipping_MODULEJOB",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEJOB_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEJOB_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gateway",
+      "code": "M_Shipping_MODULEGATEWAY",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEGATEWAY_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEGATEWAY_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "VirtualService",
+      "code": "M_Shipping_MODULEVIRTUALSERVICE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEVIRTUALSERVICE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEVIRTUALSERVICE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DestinationRule",
+      "code": "M_Shipping_MODULEDESTINATIONRULE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULEDESTINATIONRULE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULEDESTINATIONRULE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

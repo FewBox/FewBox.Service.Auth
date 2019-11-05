@@ -168,7 +168,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 foreach (var moduleItemDto in batchInitRequestDto.ModuleItems)
                 {
-                    this.InitModuleAndGrantPermission(moduleItemDto, serviceId, roleId);
+                    this.InitModuleAndGrantPermission(moduleItemDto, serviceId, roleId, Guid.Empty);
                 }
             }
             this.SendPassword(passwords);
@@ -283,12 +283,12 @@ namespace FewBox.Service.Auth.Controllers
             }
         }
 
-        private void InitModuleAndGrantPermission(ModuleItemDto moduleItemDto, Guid serviceId, Guid roleId)
+        private void InitModuleAndGrantPermission(ModuleItemDto moduleItemDto, Guid serviceId, Guid roleId, Guid parentId)
         {
             if (moduleItemDto != null)
             {
                 Guid securityObjectId = this.InitSecurityObject(serviceId, $"{moduleItemDto.Name}_{moduleItemDto.Code}");
-                Guid moduleId = this.InitModule(serviceId, securityObjectId, moduleItemDto.Name, moduleItemDto.Code);
+                Guid moduleId = this.InitModule(serviceId, securityObjectId, parentId, moduleItemDto.Name, moduleItemDto.Code);
                 if (this.Role_SecurityObjectRepository.IsExist(roleId, securityObjectId))
                 {
                     // Do Nothing.
@@ -301,7 +301,7 @@ namespace FewBox.Service.Auth.Controllers
                 {
                     foreach (var childModuleItemDto in moduleItemDto.Children)
                     {
-                        this.InitModuleAndGrantPermission(childModuleItemDto, serviceId, roleId);
+                        this.InitModuleAndGrantPermission(childModuleItemDto, serviceId, roleId, moduleId);
                     }
                 }
             }
@@ -349,7 +349,7 @@ namespace FewBox.Service.Auth.Controllers
             return apiId;
         }
 
-        private Guid InitModule(Guid serviceId, Guid securityObjectId, string name, string code)
+        private Guid InitModule(Guid serviceId, Guid securityObjectId, Guid parentId, string name, string code)
         {
             Guid moduleId;
             if (this.ModuleRepository.IsExist(serviceId, code))
@@ -358,7 +358,7 @@ namespace FewBox.Service.Auth.Controllers
             }
             else
             {
-                moduleId = this.ModuleRepository.Save(new Module { SecurityObjectId = securityObjectId, Name = name, Code = code });
+                moduleId = this.ModuleRepository.Save(new Module { SecurityObjectId = securityObjectId, ParentId = parentId, Name = name, Code = code });
             }
             return moduleId;
         }
