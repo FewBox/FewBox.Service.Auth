@@ -6,8 +6,8 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface ISecurityObjectRepository : IBaseRepository<SecurityObject, Guid>
     {
-        bool IsExist(string name);
-        SecurityObject FindOneByName(string name);
+        bool IsExist(Guid serviceId, string name);
+        SecurityObject FindOneByServiceIdAndName(Guid serviceId, string name);
         int UpdateServiceId(Guid id, Guid serviceId);
     }
 }

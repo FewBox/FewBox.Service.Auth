@@ -336,9 +336,9 @@ namespace FewBox.Service.Auth.Controllers
         private Guid InitSecurityObject(Guid serviceId, string name)
         {
             Guid securityObjectId;
-            if (this.SecurityObjectRepository.IsExist(name))
+            if (this.SecurityObjectRepository.IsExist(serviceId, name))
             {
-                securityObjectId = this.SecurityObjectRepository.FindOneByName(name).Id;
+                securityObjectId = this.SecurityObjectRepository.FindOneByServiceIdAndName(serviceId, name).Id;
             }
             else
             {

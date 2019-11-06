@@ -8,26 +8,26 @@ namespace FewBox.Service.Auth.Repository
 {
     public class SecurityObjectRepository : BaseRepository<SecurityObject, Guid>, ISecurityObjectRepository
     {
-        public SecurityObjectRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
+        public SecurityObjectRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("securityobject", ormSession, currentUser)
         {
         }
 
-        public SecurityObject FindOneByName(string name)
+        public SecurityObject FindOneByServiceIdAndName(Guid serviceId, string name)
         {
-             return this.UnitOfWork.Connection.QuerySingleOrDefault<SecurityObject>($"select * from {this.TableName} where Name = @Name",
-                new { Name = name });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<SecurityObject>($"select * from {this.TableName} where ServiceId=@ServiceId and Name = @Name",
+               new { ServiceId = serviceId, Name = name });
         }
 
-        public bool IsExist(string name)
+        public bool IsExist(Guid serviceId, string name)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name",
-                new { Name = name }) > 0;
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where ServiceId=@ServiceId and Name = @Name",
+                new { ServiceId = serviceId, Name = name }) > 0;
         }
 
         public int UpdateServiceId(Guid id, Guid serviceId)
         {
-            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ServiceId=@ServiceId where Id=@Id", new { ServiceId = serviceId, Id = id});
+            return this.UnitOfWork.Connection.Execute($"update {this.TableName} set ServiceId=@ServiceId where Id=@Id", new { ServiceId = serviceId, Id = id });
         }
 
         protected override string GetSaveSegmentSql()
