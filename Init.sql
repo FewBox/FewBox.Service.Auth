@@ -7,7 +7,7 @@ SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE IF EXISTS `service`;
 CREATE TABLE `service` (
   `Id` char(36) NOT NULL,
-  `Name` varchar(45) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
   `Description` varchar(45) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE `service` (
 DROP TABLE IF EXISTS `service_recycle`;
 CREATE TABLE `service_recycle` (
   `Id` char(36) NOT NULL,
-  `Name` varchar(45) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
   `Description` varchar(45) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
@@ -190,8 +190,8 @@ CREATE TABLE `principal` (
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,
   `ModifiedTime` datetime DEFAULT NULL,
-  `Name` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -202,8 +202,8 @@ DROP TABLE IF EXISTS `principal_recycle`;
 CREATE TABLE `principal_recycle` (
   `Id` char(36) NOT NULL,
   `PrincipalType` int(11) DEFAULT NULL,
-  `Name` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,
@@ -247,9 +247,9 @@ CREATE TABLE `principal_role_recycle` (
 DROP TABLE IF EXISTS `role`;
 CREATE TABLE `role` (
   `Id` char(36) NOT NULL,
-  `Name` varchar(45) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
   `Code` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,
@@ -263,9 +263,9 @@ CREATE TABLE `role` (
 DROP TABLE IF EXISTS `role_recycle`;
 CREATE TABLE `role_recycle` (
   `Id` char(36) NOT NULL,
-  `Name` varchar(45) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
   `Code` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,
@@ -310,8 +310,8 @@ DROP TABLE IF EXISTS `securityobject`;
 CREATE TABLE `securityobject` (
   `Id` char(36) NOT NULL,
   `ServiceId` char(36) DEFAULT NULL,
-  `Name` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,
@@ -326,8 +326,8 @@ DROP TABLE IF EXISTS `securityobject_recycle`;
 CREATE TABLE `securityobject_recycle` (
   `Id` char(36) NOT NULL,
   `ServiceId` char(36) DEFAULT NULL,
-  `Name` varchar(45) DEFAULT NULL,
-  `Description` varchar(100) DEFAULT NULL,
+  `Name` varchar(80) DEFAULT NULL,
+  `Description` varchar(200) DEFAULT NULL,
   `CreatedBy` char(36) DEFAULT NULL,
   `ModifiedBy` char(36) DEFAULT NULL,
   `CreatedTime` datetime DEFAULT NULL,

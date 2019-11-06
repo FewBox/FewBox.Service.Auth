@@ -8,7 +8,9 @@ namespace FewBox.Service.Auth.Model.Repositories
     public interface IRoleRepository : IBaseRepository<Role, Guid>
     {
         bool IsExist(string name);
+        bool IsExist(string name, string code);
         Role FindOneByName(string name);
+        Role FindOneByNameAndCode(string name, string code);
         Role FindOneByCode(string code);
         IEnumerable<Role> FindAllByApiId(Guid apiId);
         IEnumerable<Role> FindAllByModuleId(Guid moduleId);

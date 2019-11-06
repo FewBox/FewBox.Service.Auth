@@ -1,7 +1,7 @@
 {
   "service": "Shipping",
   "roleName": "Shipping Admin",
-  "roleCode": "R_Shipping_SUPPERADMIN",
+  "roleCode": "R_Shipping_SERVICEADMIN",
   "usernames": [
     "pangxiaoliang"
   ],
@@ -346,6 +346,46 @@
         {
           "name": "R",
           "code": "M_Shipping_MODULEDESTINATIONRULE_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ServiceEntry",
+      "code": "M_Shipping_MODULESERVICEENTRY",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULESERVICEENTRY_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULESERVICEENTRY_R",
+          "children": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Service",
+      "code": "M_Shipping_MODULESERVICE",
+      "children": [
+        {
+          "name": "CUD",
+          "code": "M_Shipping_MODULESERVICE_CUD",
+          "children": [
+            null
+          ]
+        },
+        {
+          "name": "R",
+          "code": "M_Shipping_MODULESERVICE_R",
           "children": [
             null
           ]

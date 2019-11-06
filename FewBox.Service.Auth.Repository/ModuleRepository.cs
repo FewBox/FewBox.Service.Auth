@@ -76,7 +76,7 @@ namespace FewBox.Service.Auth.Repository
 
         public Module FindOneByServiceAndCode(Guid serviceId, string code)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select count(1) from {this.TableName} where Code=@Code and SecurityObjectId in (select Id from securityobject where ServiceId = @ServiceId)",
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select * from {this.TableName} where Code=@Code and SecurityObjectId in (select Id from securityobject where ServiceId = @ServiceId)",
                 new { Code = code, ServiceId = serviceId });
         }
     }

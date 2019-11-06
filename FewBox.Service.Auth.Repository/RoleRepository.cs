@@ -15,11 +15,24 @@ namespace FewBox.Service.Auth.Repository
                 new { Name = name }) > 0;
         }
 
+        public bool IsExist(string name, string code)
+        {
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name = @Name and Code = @Code",
+                new { Name = name, Code = code }) > 0;
+        }
+
         public Role FindOneByName(string name)
         {
            return this.UnitOfWork.Connection.QuerySingleOrDefault<Role>($"select * from {this.TableName} where Name = @Name",
                 new { Name = name });
         }
+
+        public Role FindOneByNameAndCode(string name, string code)
+        {
+           return this.UnitOfWork.Connection.QuerySingleOrDefault<Role>($"select * from {this.TableName} where Name = @Name and Code = @Code",
+                new { Name = name, Code = code });
+        }
+
         public RoleRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
         : base("role", ormSession, currentUser)
         {

@@ -150,8 +150,12 @@ namespace FewBox.Service.Auth.Controllers
             {
                 // 3. Principal
                 string password = this.GetRandomPassword();
-                Guid principalId = this.InitUser(username, password);
-                passwords.Add(username, password);
+                bool isExist;
+                Guid principalId = this.InitUser(username, password, out isExist);
+                if (!isExist)
+                {
+                    passwords.Add(username, password);
+                }
                 // 4. Bind Principal & Role
                 this.GrantRole(principalId, roleId);
             }
@@ -227,13 +231,21 @@ namespace FewBox.Service.Auth.Controllers
 
         private Guid InitUser(string name, string password)
         {
+            bool isExist;
+            return this.InitUser(name, password, out isExist);
+        }
+
+        private Guid InitUser(string name, string password, out bool isExist)
+        {
             Guid principalId;
             if (this.PrincipalRepository.IsExist(name))
             {
+                isExist = true;
                 principalId = this.PrincipalRepository.FindOneByName(name).Id;
             }
             else
             {
+                isExist = false;
                 principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
                 Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, password);
             }
@@ -243,9 +255,9 @@ namespace FewBox.Service.Auth.Controllers
         private Guid InitRole(string name, string code)
         {
             Guid roleId;
-            if (this.RoleRepository.IsExist(name))
+            if (this.RoleRepository.IsExist(name, code))
             {
-                roleId = this.RoleRepository.FindOneByName(name).Id;
+                roleId = this.RoleRepository.FindOneByNameAndCode(name, code).Id;
             }
             else
             {
@@ -358,14 +370,18 @@ namespace FewBox.Service.Auth.Controllers
             }
             else
             {
-                moduleId = this.ModuleRepository.Save(new Module { SecurityObjectId = securityObjectId, ParentId = parentId, Name = name, Code = code });
+                moduleId = this.ModuleRepository.Save(new Module { SecurityObjectId = securityObjectId, ParentId = parentId, Code = code });
             }
             return moduleId;
         }
 
         private void SendPassword(IDictionary<string, string> passwords)
         {
-            string name = "Password";
+            if (passwords == null || passwords.Count == 0)
+            {
+                return;
+            }
+            string name = "Initial Password";
             StringBuilder param = new StringBuilder();
             foreach (var password in passwords)
             {
