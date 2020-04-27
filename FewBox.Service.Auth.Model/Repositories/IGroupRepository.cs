@@ -5,7 +5,7 @@ using System;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface IGroupRepository : IBaseRepository<Group, Guid>
+    public interface IGroupRepository : IRepository<Group>
     {
         IEnumerable<Group> FindAllByRoot();
         int CountByRoleCode(string roleCode);

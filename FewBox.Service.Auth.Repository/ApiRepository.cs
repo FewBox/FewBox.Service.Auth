@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class ApiRepository : BaseRepository<Api, Guid>, IApiRepository
+    public class ApiRepository : Repository<Api>, IApiRepository
     {
         public ApiRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("api", ormSession, currentUser)

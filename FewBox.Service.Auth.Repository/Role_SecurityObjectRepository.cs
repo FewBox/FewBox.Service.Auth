@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class Role_SecurityObjectRepository : BaseRepository<Role_SecurityObject, Guid>, IRole_SecurityObjectRepository
+    public class Role_SecurityObjectRepository : Repository<Role_SecurityObject>, IRole_SecurityObjectRepository
     {
         public Role_SecurityObjectRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
         : base("role_security", ormSession, currentUser)

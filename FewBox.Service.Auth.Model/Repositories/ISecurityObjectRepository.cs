@@ -4,7 +4,7 @@ using System;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface ISecurityObjectRepository : IBaseRepository<SecurityObject, Guid>
+    public interface ISecurityObjectRepository : IRepository<SecurityObject>
     {
         bool IsExist(Guid serviceId, string name);
         SecurityObject FindOneByServiceIdAndName(Guid serviceId, string name);

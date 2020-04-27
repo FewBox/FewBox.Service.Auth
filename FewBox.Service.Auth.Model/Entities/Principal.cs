@@ -3,7 +3,7 @@ using FewBox.Core.Persistence.Orm;
 
 namespace FewBox.Service.Auth.Model.Entities
 {
-    public class Principal : Entity<Guid>
+    public class Principal : Entity
     {
         public string Name { get; set; }
         public string Description { get; set; }

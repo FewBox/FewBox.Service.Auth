@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class RoleRepository : BaseRepository<Role, Guid>, IRoleRepository
+    public class RoleRepository : Repository<Role>, IRoleRepository
     {
         public bool IsExist(string name)
         {

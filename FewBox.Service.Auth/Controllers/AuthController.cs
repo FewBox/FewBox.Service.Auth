@@ -7,7 +7,6 @@ using System.Security.Claims;
 using FewBox.Core.Web.Token;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Config;
-using FewBox.Core.Web.Security;
 using FewBox.Service.Auth.Model.Configs;
 using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Repositories;

@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class GroupRepository : BaseRepository<Group, Guid>, IGroupRepository
+    public class GroupRepository : Repository<Group>, IGroupRepository
     {
         public GroupRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
         : base("`group`", ormSession, currentUser)

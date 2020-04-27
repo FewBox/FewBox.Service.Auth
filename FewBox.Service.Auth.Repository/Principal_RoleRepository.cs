@@ -4,11 +4,10 @@ using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Persistence.Orm;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class Principal_RoleRepository : BaseRepository<Principal_Role, Guid>, IPrincipal_RoleRepository
+    public class Principal_RoleRepository : Repository<Principal_Role>, IPrincipal_RoleRepository
     {
         public Principal_RoleRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
         : base("principal_role", ormSession, currentUser)

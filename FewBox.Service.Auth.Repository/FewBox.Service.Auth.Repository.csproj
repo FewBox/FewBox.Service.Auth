@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.60.9" />
-    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.37" />
-    <PackageReference Include="FewBox.Core.Utility" Version="1.0.30" />
+    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.39" />
+    <PackageReference Include="FewBox.Core.Utility" Version="1.0.31" />
   </ItemGroup>
 
   <ItemGroup>

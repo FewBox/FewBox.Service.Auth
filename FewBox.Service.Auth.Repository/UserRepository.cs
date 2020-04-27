@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class UserRepository : BaseRepository<User, Guid>, IUserRepository
+    public class UserRepository : Repository<User>, IUserRepository
     {
         public UserRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("user", ormSession, currentUser)

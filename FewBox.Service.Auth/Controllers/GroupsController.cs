@@ -14,7 +14,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
-    public class GroupsController : ResourcesController<IGroupRepository, Group, Guid, GroupDto, GroupPersistantDto>
+    public class GroupsController : ResourcesController<IGroupRepository, Group, GroupDto, GroupPersistantDto>
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }

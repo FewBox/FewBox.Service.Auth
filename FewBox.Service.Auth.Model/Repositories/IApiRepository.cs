@@ -5,7 +5,7 @@ using System;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface IApiRepository : IBaseRepository<Api, Guid>
+    public interface IApiRepository : IRepository<Api>
     {
         bool IsExist(Guid serviceId, string controller, string action);
         Api FindOneByServiceAndControllerAndAction(Guid serviceId, string controller, string action);

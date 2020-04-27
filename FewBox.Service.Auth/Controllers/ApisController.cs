@@ -14,7 +14,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/[controller]")]
     [Authorize(Policy = "JWTRole_ControllerAction")]
-    public class ApisController : ResourcesController<IApiRepository, Api, Guid, ApiDto, ApiPersistantDto>
+    public class ApisController : ResourcesController<IApiRepository, Api, ApiDto, ApiPersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }

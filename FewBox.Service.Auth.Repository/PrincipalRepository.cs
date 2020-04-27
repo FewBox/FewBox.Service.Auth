@@ -6,7 +6,7 @@ using System;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class PrincipalRepository : BaseRepository<Principal, Guid>, IPrincipalRepository
+    public class PrincipalRepository : Repository<Principal>, IPrincipalRepository
     {
         public PrincipalRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("principal", ormSession, currentUser)

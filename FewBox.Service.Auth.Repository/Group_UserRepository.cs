@@ -7,7 +7,7 @@ using FewBox.Core.Persistence.Orm;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class Group_UserRepository : BaseRepository<Group_User, Guid>, IGroup_UserRepository
+    public class Group_UserRepository : Repository<Group_User>, IGroup_UserRepository
     {
         public Group_UserRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser) 
         : base("group_user", ormSession, currentUser)

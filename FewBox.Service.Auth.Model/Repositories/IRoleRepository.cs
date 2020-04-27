@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface IRoleRepository : IBaseRepository<Role, Guid>
+    public interface IRoleRepository : IRepository<Role>
     {
         bool IsExist(string name);
         bool IsExist(string name, string code);

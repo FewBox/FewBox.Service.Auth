@@ -138,7 +138,6 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost("batchinit")]
         [Transaction]
-        [Trace]
         public MetaResponseDto BatchInit([FromBody]BatchInitRequestDto batchInitRequestDto)
         {
             // 1. Service

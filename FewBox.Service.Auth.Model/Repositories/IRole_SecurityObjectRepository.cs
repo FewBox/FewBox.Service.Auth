@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface IRole_SecurityObjectRepository : IBaseRepository<Role_SecurityObject, Guid>
+    public interface IRole_SecurityObjectRepository : IRepository<Role_SecurityObject>
     {
         IEnumerable<Role_SecurityObject> FindAllBySecurityId(Guid securityObjectId);
         void DeleteBySecurityId(Guid securityObjectId);

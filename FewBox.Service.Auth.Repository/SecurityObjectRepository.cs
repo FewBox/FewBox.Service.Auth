@@ -6,7 +6,7 @@ using System;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class SecurityObjectRepository : BaseRepository<SecurityObject, Guid>, ISecurityObjectRepository
+    public class SecurityObjectRepository : Repository<SecurityObject>, ISecurityObjectRepository
     {
         public SecurityObjectRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("securityobject", ormSession, currentUser)

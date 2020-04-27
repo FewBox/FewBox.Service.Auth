@@ -21,30 +21,30 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using NSwag;
-using NSwag.SwaggerGeneration.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
-using Microsoft.AspNetCore.Routing;
 using FewBox.Core.Web.Error;
 using FewBox.Core.Utility.Net;
 using FewBox.Core.Utility.Formatter;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Newtonsoft.Json;
-using FewBox.Core.Web.Log;
 using FewBox.Core.Web.Notification;
+using NSwag;
+using NSwag.Generation.Processors.Security;
+using Sentry.Extensibility;
+using FewBox.Core.Web.Sentry;
 
 namespace FewBox.Service.Auth
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
-            this.HostingEnvironment = hostingEnvironment;
+            this.Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
-        public IHostingEnvironment HostingEnvironment { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -56,22 +56,20 @@ namespace FewBox.Service.Auth
             HttpUtility.IsCertificateNeedValidate = false;
             HttpUtility.IsEnsureSuccessStatusCode = false;
             services.AddRouting(options => options.LowercaseUrls = true);
-            services.AddMvc(options=>{
-                if (this.HostingEnvironment.EnvironmentName != "Test")
-                {
-                    options.Filters.Add<ExceptionAsyncFilter>();
-                }
-                if (this.HostingEnvironment.EnvironmentName == "Development")
+            services.AddMvc(options =>
+            {
+                if (this.Environment.EnvironmentName == "Development")
                 {
                     options.Filters.Add(new AllowAnonymousFilter());
                 }
                 options.Filters.Add<TransactionAsyncFilter>();
                 options.Filters.Add<TraceAsyncFilter>();
             })
-            .AddJsonOptions(options=>{
-                options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.IgnoreNullValues = true;
             })
-            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            .SetCompatibilityVersion(CompatibilityVersion.Latest);
             services.AddCors(
                 options =>
                 {
@@ -87,7 +85,7 @@ namespace FewBox.Service.Auth
                         });
 
                 });
-            services.AddAutoMapper();
+            services.AddAutoMapper(typeof(Startup));
             services.AddMemoryCache();
             services.AddRouting(options => options.LowercaseUrls = true);
             services.AddSingleton<IExceptionProcessorService, ExceptionProcessorService>();
@@ -139,24 +137,30 @@ namespace FewBox.Service.Auth
             services.AddScoped<IGroup_UserRepository, Group_UserRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
-            // Used for Exception&Log AOP.
-            // services.AddScoped<ILogHandler, ConsoleLogHandler>();
+            // Used for Exception.
             // services.AddScoped<INotificationHandler, ConsoleNotificationHandler>();
-            services.AddScoped<ILogHandler, ServiceLogHandler>();
             services.AddScoped<INotificationHandler, ServiceNotificationHandler>();
             services.AddScoped<ITryCatchService, TryCatchService>();
             // Used for IHttpContextAccessor&IActionContextAccessor context.
             services.AddHttpContextAccessor();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
             // Used for JWT.
-            services.AddScoped<ITokenService, JWTToken>();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services.AddScoped<ITokenService, JWTTokenService>();
+            services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddGoogle(options =>
+                {
+                    IConfigurationSection googleAuthNSection = this.Configuration.GetSection("Authentication:Google");
+                    options.ClientId = googleAuthNSection["ClientId"];
+                    options.ClientSecret = googleAuthNSection["ClientSecret"];
+                }
+            )
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidateAudience = false,
+                    ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtConfig.Issuer,
@@ -172,13 +176,13 @@ namespace FewBox.Service.Auth
                     document.Info.Title = "FewBox Auth API";
                     document.Info.Description = "FewBox Auth, for more information please visit the 'https://fewbox.com'";
                     document.Info.TermsOfService = "https://fewbox.com/terms";
-                    document.Info.Contact = new NSwag.SwaggerContact
+                    document.Info.Contact = new OpenApiContact
                     {
                         Name = "FewBox",
                         Email = "support@fewbox.com",
                         Url = "https://fewbox.com/support"
                     };
-                    document.Info.License = new NSwag.SwaggerLicense
+                    document.Info.License = new OpenApiLicense
                     {
                         Name = "Use under license",
                         Url = "https://raw.githubusercontent.com/FewBox/FewBox.Service.Auth/master/LICENSE"
@@ -186,45 +190,50 @@ namespace FewBox.Service.Auth
                 };
                 config.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT"));
                 config.DocumentProcessors.Add(
-                    new SecurityDefinitionAppender("JWT", new List<string> { "API" }, new SwaggerSecurityScheme
+                    new SecurityDefinitionAppender("JWT", new List<string> { "API" }, new OpenApiSecurityScheme
                     {
-                        Type = SwaggerSecuritySchemeType.ApiKey,
+                        Type = OpenApiSecuritySchemeType.ApiKey,
                         Name = "Authorization",
                         Description = "Bearer [Token]",
-                        In = SwaggerSecurityApiKeyLocation.Header
+                        In = OpenApiSecurityApiKeyLocation.Header
                     })
                 );
             });
+            // Used for Sentry
+            services.AddTransient<ISentryEventProcessor, SentryEventProcessor>();
+            services.AddSingleton<ISentryEventExceptionProcessor, SentryEventExceptionProcessor>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        [Obsolete]
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseOpenApi();
+            app.UseStaticFiles();
+            app.UseCors("all");
+
+            if (env.EnvironmentName == "Development")
             {
+                app.UseSwaggerUi3();
                 app.UseDeveloperExceptionPage();
             }
-            else
+            if (env.EnvironmentName == "Staging")
             {
+                app.UseSwaggerUi3();
+                app.UseDeveloperExceptionPage();
+            }
+            if (env.EnvironmentName == "Production")
+            {
+                app.UseReDoc();
                 app.UseHsts();
             }
 
-            //app.UseAuthentication();
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseSwagger();
-            if (env.IsDevelopment() || env.IsStaging())
+            app.UseEndpoints(endpoints =>
             {
-                app.UseCors("all");
-                app.UseSwaggerUi3();
-            }
-            else
-            {
-                app.UseCors("all");
-                app.UseReDoc();
-            }
-            app.UseMvc();
+                endpoints.MapControllers();
+            });
         }
     }
 }

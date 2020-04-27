@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Model.Repositories
 {
-    public interface IModuleRepository : IBaseRepository<Module, Guid>
+    public interface IModuleRepository : IRepository<Module>
     {
         bool IsExist(Guid serviceId, string code);
         Module FindOneByServiceAndCode(Guid serviceId, string code);

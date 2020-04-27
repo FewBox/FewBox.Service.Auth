@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.37" />
-    <PackageReference Include="FewBox.Core.Web" Version="1.0.69" />
+    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.39" />
+    <PackageReference Include="FewBox.Core.Web" Version="1.0.77" />
   </ItemGroup>
 
   <ItemGroup>
