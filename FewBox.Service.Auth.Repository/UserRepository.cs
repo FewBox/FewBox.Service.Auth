@@ -139,12 +139,12 @@ namespace FewBox.Service.Auth.Repository
 
         protected override string GetSaveSegmentSql()
         {
-            return "DisplayName,Department,Email,Mobile,Type,PrincipalId";
+            return "DisplayName,Department,Email,Mobile,Type,PrincipalId,GoogleId,GoogleEmail";
         }
 
         protected override string GetUpdateSegmentSql()
         {
-            return "DisplayName,Department,Email,Mobile,Type";
+            return "DisplayName,Department,Email,Mobile,Type,GoogleId,GoogleEmail";
         }
 
         protected override string GetUpdateWithUniqueKeyWhereSegmentSql()
@@ -161,18 +161,18 @@ namespace FewBox.Service.Auth.Repository
 
         public bool IsGoogleAccountExists(string googleId)
         {
-            // Todo: need to implement.
-            return true;
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where GoogleId='@GoogleId'", new { GoogleId = googleId }) > 0;
         }
 
         public User FindOneByUserGoogleId(string googleId)
         {
-            throw new NotImplementedException();
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<User>($"select * from {this.TableName} where GoogleId='@GoogleId'", new { GoogleId = googleId });
         }
 
         public Guid SaveGoogleAccount(string googleId, string googleEmail)
         {
-            throw new NotImplementedException();
+            User user = new User { GoogleId = googleId, GoogleEmail = googleEmail };
+            return this.Save(user);
         }
     }
 }

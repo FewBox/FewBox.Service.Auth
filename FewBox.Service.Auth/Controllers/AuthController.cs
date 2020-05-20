@@ -89,6 +89,10 @@ namespace FewBox.Service.Auth.Controllers
                 }
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
+                if (claims == null)
+                {
+                    claims = new List<Claim>();
+                }
                 var userInfo = new UserInfo
                 {
                     Id = userId,
