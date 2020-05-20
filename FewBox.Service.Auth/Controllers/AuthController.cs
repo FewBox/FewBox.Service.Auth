@@ -10,6 +10,8 @@ using FewBox.Core.Web.Config;
 using FewBox.Service.Auth.Model.Configs;
 using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Repositories;
+using Google.Apis.Auth;
+using System.Threading.Tasks;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -42,10 +44,10 @@ namespace FewBox.Service.Auth.Controllers
 
         [AllowAnonymous]
         [HttpPost("signin")]
-        public PayloadResponseDto<SignInResponseDto> SignIn([FromBody]SignInRequestDto signInRequestDto)
+        public PayloadResponseDto<SigninResponseDto> Signin([FromBody] SigninRequestDto signinRequestDto)
         {
             Guid userId;
-            if (signInRequestDto.UserType == "Form" && this.UserRepository.IsPasswordValid(signInRequestDto.Username, signInRequestDto.Password, out userId))
+            if (signinRequestDto.UserType == "Form" && this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId))
             {
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
@@ -57,17 +59,54 @@ namespace FewBox.Service.Auth.Controllers
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
-                return new PayloadResponseDto<SignInResponseDto>
+                return new PayloadResponseDto<SigninResponseDto>
                 {
-                    Payload = new SignInResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
+                    Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
                 };
             }
-            return new PayloadResponseDto<SignInResponseDto>
+            return new PayloadResponseDto<SigninResponseDto>
             {
-                Payload = new SignInResponseDto { IsValid = false }
+                Payload = new SigninResponseDto { IsValid = false }
             };
         }
 
+        [AllowAnonymous]
+        [HttpPost("signingoogle")]
+        public async Task<PayloadResponseDto<SigninResponseDto>> SigninGoogleAsync([FromBody] SigninGoogleRequestDto signinGoogleRequestDto)
+        {
+            GoogleJsonWebSignature.Payload validPayload = await GoogleJsonWebSignature.ValidateAsync(signinGoogleRequestDto.IdToken);
+            if (validPayload != null)
+            {
+                Guid userId;
+                if (this.UserRepository.IsGoogleAccountExists(validPayload.Subject))
+                {
+                    var user = this.UserRepository.FindOneByUserGoogleId(validPayload.Subject);
+                    userId = user.Id;
+                }
+                else
+                {
+                    userId = this.UserRepository.SaveGoogleAccount(validPayload.Subject, validPayload.Email);
+                }
+                var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
+                             select new Claim(ClaimTypes.Role, role);
+                var userInfo = new UserInfo
+                {
+                    Id = userId,
+                    Key = this.JWTConfig.Key,
+                    Issuer = this.JWTConfig.Issuer,
+                    Claims = claims
+                };
+                string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+                return new PayloadResponseDto<SigninResponseDto>
+                {
+                    Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
+                };
+            }
+            return new PayloadResponseDto<SigninResponseDto>
+            {
+                Payload = new SigninResponseDto { IsValid = false }
+            };
+        }
         [AllowAnonymous]
         [HttpGet("{serviceName}/{controllerName}/{actionName}")]
         public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)

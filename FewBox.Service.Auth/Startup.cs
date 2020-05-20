@@ -26,11 +26,11 @@ using FewBox.Core.Web.Error;
 using FewBox.Core.Utility.Net;
 using FewBox.Core.Utility.Formatter;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Newtonsoft.Json;
 using FewBox.Core.Web.Notification;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Sentry.Extensibility;
+using Microsoft.Extensions.Hosting;
 using FewBox.Core.Web.Sentry;
 
 namespace FewBox.Service.Auth
@@ -58,7 +58,7 @@ namespace FewBox.Service.Auth
             services.AddRouting(options => options.LowercaseUrls = true);
             services.AddMvc(options =>
             {
-                if (this.Environment.EnvironmentName == "Development")
+                if (this.Environment.IsDevelopment())
                 {
                     options.Filters.Add(new AllowAnonymousFilter());
                 }
@@ -76,12 +76,23 @@ namespace FewBox.Service.Auth
                     options.AddDefaultPolicy(
                         builder =>
                         {
-                            builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins("https://fewbox.com").AllowAnyMethod().AllowAnyHeader();
+                            builder
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .WithOrigins("https://fewbox.com", "https://figma.com")
+                            .AllowCredentials()
+                            .SetIsOriginAllowedToAllowWildcardSubdomains();
                         });
-                    options.AddPolicy("all",
+                    options.AddPolicy("dev",
                         builder =>
                         {
-                            builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                            builder
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            //.AllowAnyOrigin()
+                            .WithOrigins("http://localhost", "https://localhost")
+                            .AllowCredentials()
+                            .SetIsOriginAllowedToAllowWildcardSubdomains();
                         });
 
                 });
@@ -212,20 +223,22 @@ namespace FewBox.Service.Auth
             app.UseAuthorization();
             app.UseOpenApi();
             app.UseStaticFiles();
-            app.UseCors("all");
 
-            if (env.EnvironmentName == "Development")
+            if (env.IsDevelopment())
             {
+                app.UseCors("dev");
                 app.UseSwaggerUi3();
                 app.UseDeveloperExceptionPage();
             }
-            if (env.EnvironmentName == "Staging")
+            if (env.IsStaging())
             {
+                app.UseCors();
                 app.UseSwaggerUi3();
                 app.UseDeveloperExceptionPage();
             }
-            if (env.EnvironmentName == "Production")
+            if (env.IsProduction())
             {
+                app.UseCors();
                 app.UseReDoc();
                 app.UseHsts();
             }

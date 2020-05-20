@@ -80,7 +80,7 @@ namespace FewBox.Service.Auth.Controllers
         [AllowAnonymous]
         [HttpPost("init")]
         [Transaction]
-        public MetaResponseDto Init([FromBody]InitRequestDto initRequestDto)
+        public MetaResponseDto Init([FromBody] InitRequestDto initRequestDto)
         {
             # region Validate Inited.
             if (this.UserRepository.Count() > 0)
@@ -95,7 +95,7 @@ namespace FewBox.Service.Auth.Controllers
 
             # region API Init.
             // 1. Service
-            Guid serviceId = this.InitService(this.SecurityConfig.Name, "Build-In Auth Service.");
+            Guid serviceId = this.InitService("Auth", "Build-In Auth Service.");
             // 2. Principal
             Guid principalId = this.InitUser(initRequestDto.AdminName, initRequestDto.Password);
             // 3. Role
@@ -138,7 +138,7 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost("batchinit")]
         [Transaction]
-        public MetaResponseDto BatchInit([FromBody]BatchInitRequestDto batchInitRequestDto)
+        public MetaResponseDto BatchInit([FromBody] BatchInitRequestDto batchInitRequestDto)
         {
             // 1. Service
             Guid serviceId = this.InitService(batchInitRequestDto.Service, batchInitRequestDto.Service);
