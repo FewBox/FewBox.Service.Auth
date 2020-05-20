@@ -12,5 +12,9 @@ namespace FewBox.Service.Auth.Model.Entities
         public string Mobile { get; set; }
         public Guid PrincipalId { get; set; }
         public UserType Type { get; set; }
+        #region Google
+        public string GoogleId { get; set; }
+        public string GoogleEmail { get; set; }
+        #endregion
     }
 }

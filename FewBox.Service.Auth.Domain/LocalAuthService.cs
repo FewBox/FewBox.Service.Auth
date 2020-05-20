@@ -40,7 +40,7 @@ namespace FewBox.Service.Auth.Domain
             return roles.Intersect(apiRoles).Count() > 0;
         }
 
-        public bool DoesUserHavePermission(string method, IList<string> roles)
+        public bool DoesUserHavePermission(string service, AuthCodeType authCodeType, string code, IList<string> roles)
         {
             throw new NotImplementedException();
         }

@@ -3,7 +3,7 @@ using System;
 
 namespace FewBox.Service.Auth.Model.Dtos
 {
-    public class GroupDto : EntityDto<Guid>
+    public class GroupDto : EntityDto
     {
         public string Name { get; set; }
         public string Description { get; set; }

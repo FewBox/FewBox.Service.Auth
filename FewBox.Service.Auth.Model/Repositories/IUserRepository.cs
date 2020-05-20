@@ -19,5 +19,10 @@ namespace FewBox.Service.Auth.Model.Repositories
         IEnumerable<User> FindAllByKeyword(string keyword);
         IEnumerable<User> FindAllByIds(Guid[] ids);
         IEnumerable<User> FindAllByType(UserType userType);
+        #region Google
+        bool IsGoogleAccountExists(string googleId);
+        User FindOneByUserGoogleId(string googleId);
+        Guid SaveGoogleAccount(string googleId, string googleEmail);
+        #endregion
     }
 }

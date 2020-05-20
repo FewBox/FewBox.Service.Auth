@@ -158,5 +158,21 @@ namespace FewBox.Service.Auth.Repository
                 (user, principal) => { user.Name = principal.Name; user.Description = principal.Description; return user; },
                 new { Type = userType });
         }
+
+        public bool IsGoogleAccountExists(string googleId)
+        {
+            // Todo: need to implement.
+            return true;
+        }
+
+        public User FindOneByUserGoogleId(string googleId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Guid SaveGoogleAccount(string googleId, string googleEmail)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
