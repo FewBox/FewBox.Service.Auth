@@ -51,6 +51,12 @@ namespace FewBox.Service.Auth.Controllers
             {
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
+                if (claims != null)
+                {
+                    var moduleClaims = from module in this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code)
+                                       select new Claim("Module", module);
+                    claims.Concat(moduleClaims);
+                }
                 var userInfo = new UserInfo
                 {
                     Id = userId.ToString(),
@@ -111,6 +117,35 @@ namespace FewBox.Service.Auth.Controllers
                 Payload = new SigninResponseDto { IsValid = false }
             };
         }
+
+        [AllowAnonymous]
+        [HttpPost("checkin")]
+        public PayloadResponseDto<CheckinResponseDto> Checkin([FromBody] CheckinRequestDto checkinRequestDto)
+        {
+            Guid userId;
+            if (this.UserRepository.IsPasswordValid(checkinRequestDto.AccessKey, checkinRequestDto.SecurityKey, out userId))
+            {
+                var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
+                             select new Claim(ClaimTypes.Role, role);
+                var userInfo = new UserInfo
+                {
+                    Id = userId.ToString(),
+                    Key = this.JWTConfig.Key,
+                    Issuer = this.JWTConfig.Issuer,
+                    Claims = claims
+                };
+                string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+                return new PayloadResponseDto<CheckinResponseDto>
+                {
+                    Payload = new CheckinResponseDto { IsValid = true, Token = token }
+                };
+            }
+            return new PayloadResponseDto<CheckinResponseDto>
+            {
+                Payload = new CheckinResponseDto { IsValid = false }
+            };
+        }
+
         [AllowAnonymous]
         [HttpGet("{serviceName}/{controllerName}/{actionName}")]
         public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)

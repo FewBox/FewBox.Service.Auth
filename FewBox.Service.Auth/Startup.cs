@@ -146,6 +146,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<IRole_SecurityObjectRepository, Role_SecurityObjectRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IGroup_UserRepository, Group_UserRepository>();
+            services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
             // Used for Exception.

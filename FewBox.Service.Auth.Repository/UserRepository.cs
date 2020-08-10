@@ -139,7 +139,7 @@ namespace FewBox.Service.Auth.Repository
 
         protected override string GetSaveSegmentSql()
         {
-            return "DisplayName,Department,Email,Mobile,Type,PrincipalId,GoogleId,GoogleEmail";
+            return "DisplayName,Department,Email,Mobile,Type,PrincipalId,TenantId,GoogleId,GoogleEmail";
         }
 
         protected override string GetUpdateSegmentSql()

@@ -4,6 +4,7 @@
     {
         Form,
         Domain,
-        OAuth
+        ThirdPart,
+        System
     }
 }
