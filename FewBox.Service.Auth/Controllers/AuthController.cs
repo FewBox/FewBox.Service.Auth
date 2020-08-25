@@ -47,7 +47,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<SigninResponseDto> Signin([FromBody] SigninRequestDto signinRequestDto)
         {
             Guid userId;
-            if (signinRequestDto.UserType == "Form" && this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId))
+            if (this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId))
             {
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
@@ -118,7 +118,6 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [AllowAnonymous]
         [HttpPost("checkin")]
         public PayloadResponseDto<CheckinResponseDto> Checkin([FromBody] CheckinRequestDto checkinRequestDto)
         {
@@ -147,8 +146,9 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("{serviceName}/{controllerName}/{actionName}")]
-        public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName)
+        [ResponseCache(CacheProfileName = "default", VaryByQueryKeys = new[] { "datetime" })]
+        [HttpGet("{serviceName}/{controllerName}/{actionName}/roles")]
+        public PayloadResponseDto<IList<string>> GetRoles(string serviceName, string controllerName, string actionName, [FromQuery] string datetime)
         {
             var apiRoles = new List<string>();
             var api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceName, controllerName, actionName);

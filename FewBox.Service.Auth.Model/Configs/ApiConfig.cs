@@ -1,15 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Model.Configs
 {
     public class ApiConfig
     {
-        public IList<ApiItem> ApiItems { get; set; }
-    }
-
-    public class ApiItem
-    {
+        public IList<string> DefaultRoles { get; set; }
         public string Controller { get; set; }
-        public string[] Actions { get; set; }
+        public IList<ActionConfig> Actions { get; set; }
     }
 }

@@ -25,9 +25,14 @@ namespace FewBox.Service.Auth.Repository
             return this.UnitOfWork.Connection.Query<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.ParentId = '00000000-0000-0000-0000-000000000000' or m.ParentId is null");
         }
 
-        public Module FindOneByKey(string key)
+        public Module FindOneByCode(string code)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.`Key` = @Key", new { Key = key });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where m.Code = @Code", new { Code = code });
+        }
+
+        public Module FindOneByName(string name)
+        {
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<Module>($"select m.*,so.Name,so.Description from {this.TableName} m left join securityobject so on m.SecurityObjectId = so.Id where so.Name = @Name", new { Name = name });
         }
 
         public new Module FindOne(Guid id)

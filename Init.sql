@@ -1,4 +1,4 @@
-USE authentication;
+USE auth;
 SET FOREIGN_KEY_CHECKS=0;
 
 -- ----------------------------
@@ -375,5 +375,27 @@ CREATE TABLE `user_recycle` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of user_recycle
+-- Table structure for tenant
 -- ----------------------------
+CREATE TABLE `tenant` (
+  `Id` char(36) NOT NULL,
+  `Name` varchar(45) DEFAULT NULL,
+  `CreatedBy` char(36) DEFAULT NULL,
+  `ModifiedBy` char(36) DEFAULT NULL,
+  `CreatedTime` datetime DEFAULT NULL,
+  `ModifiedTime` datetime DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for tenant_recycle
+-- ----------------------------
+CREATE TABLE `tenant_recycle` (
+  `Id` char(36) NOT NULL,
+  `Name` varchar(45) DEFAULT NULL,
+  `CreatedBy` char(36) DEFAULT NULL,
+  `ModifiedBy` char(36) DEFAULT NULL,
+  `CreatedTime` datetime DEFAULT NULL,
+  `ModifiedTime` datetime DEFAULT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

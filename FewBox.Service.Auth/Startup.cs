@@ -58,6 +58,10 @@ namespace FewBox.Service.Auth
             services.AddRouting(options => options.LowercaseUrls = true);
             services.AddMvc(options =>
             {
+                options.CacheProfiles.Add("default", new Microsoft.AspNetCore.Mvc.CacheProfile
+                {
+                    Duration = 3600 // One hour.
+                });
                 if (this.Environment.IsDevelopment())
                 {
                     options.Filters.Add(new AllowAnonymousFilter());
@@ -98,6 +102,7 @@ namespace FewBox.Service.Auth
                 });
             services.AddAutoMapper(typeof(Startup));
             services.AddMemoryCache();
+            services.AddResponseCaching();
             services.AddRouting(options => options.LowercaseUrls = true);
             services.AddSingleton<IExceptionProcessorService, ExceptionProcessorService>();
             // Used for Config.
@@ -114,17 +119,8 @@ namespace FewBox.Service.Auth
             services.AddSingleton(notificationConfig);
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);
-            var apiConfig = this.Configuration.GetSection("ApiConfig").Get<ApiConfig>();
-            services.AddSingleton(apiConfig);
-            var externalApiConfig = this.Configuration.GetSection("ExternalApiConfig").Get<ExternalApiConfig>();
-            if (externalApiConfig != null)
-            {
-                services.AddSingleton(externalApiConfig);
-            }
-            else
-            {
-                services.AddSingleton(new ExternalApiConfig { });
-            }
+            var initialConfig = this.Configuration.GetSection("InitialConfig").Get<InitialConfig>();
+            services.AddSingleton(initialConfig);
             // Used for RBAC AOP.
             services.AddScoped<IAuthorizationHandler, RoleHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
@@ -218,6 +214,7 @@ namespace FewBox.Service.Auth
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseResponseCaching();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();

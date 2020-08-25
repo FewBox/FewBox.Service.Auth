@@ -12,7 +12,8 @@ namespace FewBox.Service.Auth.Model.Repositories
         IEnumerable<Module> FindAllByRoot();
         IEnumerable<Module> FindAllByParent(Guid parentId);
         IEnumerable<Module> FindAllByUserId(Guid userId);
-        Module FindOneByKey(string key);
+        Module FindOneByCode(string code);
+        Module FindOneByName(string name);
         void ChangeModuleParentId(Guid parentId, IList<Guid> sourceIds);
         int UpdateParent(Guid id, Guid parentId);
     }

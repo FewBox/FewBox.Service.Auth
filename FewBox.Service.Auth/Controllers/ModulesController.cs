@@ -192,7 +192,7 @@ namespace FewBox.Service.Auth.Controllers
         [HttpGet("seek/{moduleKey}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> Get(string moduleKey)
         {
-            var module = this.Repository.FindOneByKey(moduleKey);
+            var module = this.Repository.FindOneByCode(moduleKey);
             return new PayloadResponseDto<IEnumerable<RoleDto>>{
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(module.Id))
             };
