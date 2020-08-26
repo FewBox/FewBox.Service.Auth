@@ -351,6 +351,9 @@ CREATE TABLE `user` (
   `CreatedTime` datetime DEFAULT NULL,
   `ModifiedTime` datetime DEFAULT NULL,
   `PrincipalId` char(36) DEFAULT NULL,
+  `TenantId` char(36) DEFAULT NULL,
+  `GoogleId` varchar(100) DEFAULT NULL,
+  `GoogleEmail` varchar(100) DEFAULT NULL,
   `DisplayName` varchar(45) DEFAULT NULL,
   `Department` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`Id`)
@@ -371,12 +374,18 @@ CREATE TABLE `user_recycle` (
   `CreatedTime` datetime DEFAULT NULL,
   `ModifiedTime` datetime DEFAULT NULL,
   `PrincipalId` char(36) DEFAULT NULL,
+  `TenantId` char(36) DEFAULT NULL,
+  `GoogleId` varchar(100) DEFAULT NULL,
+  `GoogleEmail` varchar(100) DEFAULT NULL,
+  `DisplayName` varchar(45) DEFAULT NULL,
+  `Department` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for tenant
 -- ----------------------------
+DROP TABLE IF EXISTS `tenant`;
 CREATE TABLE `tenant` (
   `Id` char(36) NOT NULL,
   `Name` varchar(45) DEFAULT NULL,
@@ -390,6 +399,7 @@ CREATE TABLE `tenant` (
 -- ----------------------------
 -- Table structure for tenant_recycle
 -- ----------------------------
+DROP TABLE IF EXISTS `tenant_recycle`;
 CREATE TABLE `tenant_recycle` (
   `Id` char(36) NOT NULL,
   `Name` varchar(45) DEFAULT NULL,

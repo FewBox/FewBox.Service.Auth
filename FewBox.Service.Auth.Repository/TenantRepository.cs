@@ -13,6 +13,11 @@ namespace FewBox.Service.Auth.Repository
         {
         }
 
+        public Tenant FindOneByName(string name)
+        {
+            return this.UnitOfWork.Connection.QueryFirstOrDefault<Tenant>($"select * from {this.TableName} where Name=@Name", new { Name = name });
+        }
+
         public bool IsExist(string name)
         {
             return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where Name=@Name", new { Name = name }) > 0;

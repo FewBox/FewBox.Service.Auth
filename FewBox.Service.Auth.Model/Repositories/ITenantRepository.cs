@@ -5,6 +5,7 @@ namespace FewBox.Service.Auth.Model.Repositories
 {
     public interface ITenantRepository : IRepository<Tenant>
     {
+        Tenant FindOneByName(string name);
         bool IsExist(string name);
     }
 }

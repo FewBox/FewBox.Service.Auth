@@ -12,6 +12,7 @@ using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Repositories;
 using Google.Apis.Auth;
 using System.Threading.Tasks;
+using FewBox.Service.Auth.Model.Entities;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -25,18 +26,20 @@ namespace FewBox.Service.Auth.Controllers
         private IModuleRepository ModuleRepository { get; set; }
         private IApiRepository ApiRepository { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
+        private ITenantRepository TenantRepository { get; set; }
         private ITokenService TokenService { get; set; }
         private JWTConfig JWTConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
-        public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository,
-        IApiRepository apiRepository, IRole_SecurityObjectRepository role_SecurityObjectRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
+        public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
+        IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
             this.ModuleRepository = moduleRepository;
             this.ApiRepository = apiRepository;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
+            this.TenantRepository = tenantRepository;
             this.TokenService = tokenService;
             this.JWTConfig = jWTConfig;
             this.AuthConfig = authConfig;
@@ -46,9 +49,10 @@ namespace FewBox.Service.Auth.Controllers
         [HttpPost("signin")]
         public PayloadResponseDto<SigninResponseDto> Signin([FromBody] SigninRequestDto signinRequestDto)
         {
-            Guid userId;
-            if (this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId))
+            Guid userId, tenantId;
+            if (this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId, out tenantId))
             {
+                Tenant tenant = this.TenantRepository.FindOne(tenantId);
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
                 if (claims != null)
@@ -59,6 +63,7 @@ namespace FewBox.Service.Auth.Controllers
                 }
                 var userInfo = new UserInfo
                 {
+                    Tenant = tenant.Name,
                     Id = userId.ToString(),
                     Key = this.JWTConfig.Key,
                     Issuer = this.JWTConfig.Issuer,
@@ -121,13 +126,15 @@ namespace FewBox.Service.Auth.Controllers
         [HttpPost("checkin")]
         public PayloadResponseDto<CheckinResponseDto> Checkin([FromBody] CheckinRequestDto checkinRequestDto)
         {
-            Guid userId;
-            if (this.UserRepository.IsPasswordValid(checkinRequestDto.AccessKey, checkinRequestDto.SecurityKey, out userId))
+            Guid userId, tenantId;
+            if (this.UserRepository.IsPasswordValid(checkinRequestDto.AccessKey, checkinRequestDto.SecurityKey, out userId, out tenantId))
             {
+                Tenant tenant = this.TenantRepository.FindOne(tenantId);
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
                 var userInfo = new UserInfo
                 {
+                    Tenant = tenant.Name,
                     Id = userId.ToString(),
                     Key = this.JWTConfig.Key,
                     Issuer = this.JWTConfig.Issuer,

@@ -36,6 +36,7 @@ namespace FewBox.Service.Auth.Controllers
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IServiceRepository ServiceRepository { get; set; }
+        private ITenantRepository TenantRepository { get; set; }
         private InitialConfig InitialConfig { get; set; }
         private NotificationConfig NotificationConfig { get; set; }
         private ITryCatchService TryCatchService { get; set; }
@@ -43,8 +44,8 @@ namespace FewBox.Service.Auth.Controllers
         public SchemaController(SecurityConfig securityConfig, IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
-            IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository,
-            IServiceRepository serviceRepository, InitialConfig initialConfig, NotificationConfig notificationConfig,
+            IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository,
+            ITenantRepository tenantRepository, InitialConfig initialConfig, NotificationConfig notificationConfig,
             ITryCatchService tryCatchService, IMapper mapper) : base(mapper)
         {
             this.SecurityConfig = securityConfig;
@@ -59,6 +60,7 @@ namespace FewBox.Service.Auth.Controllers
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.ServiceRepository = serviceRepository;
+            this.TenantRepository = tenantRepository;
             this.InitialConfig = initialConfig;
             this.NotificationConfig = notificationConfig;
             this.TryCatchService = tryCatchService;
@@ -151,6 +153,16 @@ namespace FewBox.Service.Auth.Controllers
 
         private IDictionary<string, string> Init(IList<ServiceConfig> services)
         {
+            Guid tenantId;
+            if (this.TenantRepository.IsExist(this.InitialConfig.Tenant))
+            {
+                tenantId = this.TenantRepository.FindOneByName(this.InitialConfig.Tenant).Id;
+            }
+            else
+            {
+                Tenant tenant = new Tenant { Name = this.InitialConfig.Tenant };
+                tenantId = this.TenantRepository.Save(tenant);
+            }
             IDictionary<string, string> passwords = new Dictionary<string, string>();
             # region API Init.
             foreach (ServiceConfig service in services)
@@ -175,7 +187,7 @@ namespace FewBox.Service.Auth.Controllers
                     {
                         // 3. Principal
                         string password = this.GetRandomPassword();
-                        Guid principalId = this.InitUser(user.Name, password);
+                        Guid principalId = this.InitUser(tenantId, user.Name, password);
                         userIdPair.Add(user.Name, principalId);
                         passwords.Add(user.Name, password);
                     }
@@ -242,13 +254,13 @@ namespace FewBox.Service.Auth.Controllers
             return passwords;
         }
 
-        private Guid InitUser(string name, string password)
+        private Guid InitUser(Guid tenantId, string name, string password)
         {
             bool isExist;
-            return this.InitUser(name, password, out isExist);
+            return this.InitUser(tenantId, name, password, out isExist);
         }
 
-        private Guid InitUser(string name, string password, out bool isExist)
+        private Guid InitUser(Guid tenantId, string name, string password, out bool isExist)
         {
             Guid principalId;
             if (this.PrincipalRepository.IsExist(name))
@@ -260,7 +272,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 isExist = false;
                 principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
-                Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId }, password);
+                Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId, TenantId = tenantId }, password);
             }
             return principalId;
         }

@@ -113,8 +113,6 @@ namespace FewBox.Service.Auth
             services.AddSingleton(securityConfig);
             var healthyConfig = this.Configuration.GetSection("HealthyConfig").Get<HealthyConfig>();
             services.AddSingleton(healthyConfig);
-            var logConfig = this.Configuration.GetSection("LogConfig").Get<LogConfig>();
-            services.AddSingleton(logConfig);
             var notificationConfig = this.Configuration.GetSection("NotificationConfig").Get<NotificationConfig>();
             services.AddSingleton(notificationConfig);
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
@@ -126,7 +124,15 @@ namespace FewBox.Service.Auth
             services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
             services.AddScoped<IAuthService, LocalAuthService>();
             // Used for ORM.
-            services.AddScoped<IOrmConfiguration, AppSettingOrmConfiguration>();
+            if(authConfig.OrmConfigurationType == OrmConfigurationTypeConfig.Tenant)
+            {
+                services.AddScoped<IOrmConfiguration, AppSettingTenantOrmConfiguration>();
+            }
+            else{
+                services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
+            }
+            //services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
+            
             services.AddScoped<IOrmSession, MySqlSession>(); // Note: MySql
             // services.AddScoped<IOrmSession, SQLiteSession>(); // Note: SQLite
             services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
