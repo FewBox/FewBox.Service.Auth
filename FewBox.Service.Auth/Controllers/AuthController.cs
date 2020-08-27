@@ -13,6 +13,8 @@ using FewBox.Service.Auth.Model.Repositories;
 using Google.Apis.Auth;
 using System.Threading.Tasks;
 using FewBox.Service.Auth.Model.Entities;
+using FewBox.Core.Web.Error;
+using FewBox.Core.Utility.Net;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -30,12 +32,15 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private ITokenService TokenService { get; set; }
+        private ITryCatchService TryCatchService { get; set; }
+        private NotificationConfig NotificationConfig { get; set; }
         private JWTConfig JWTConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
         IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
-        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
+        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, ITryCatchService tryCatchService, NotificationConfig notificationConfig,
+        JWTConfig jWTConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
@@ -46,6 +51,8 @@ namespace FewBox.Service.Auth.Controllers
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.TokenService = tokenService;
+            this.TryCatchService = tryCatchService;
+            this.NotificationConfig = notificationConfig;
             this.JWTConfig = jWTConfig;
             this.AuthConfig = authConfig;
         }
@@ -135,6 +142,7 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [AllowAnonymous]
         [HttpPost("checkin")]
         public PayloadResponseDto<CheckinResponseDto> Checkin([FromBody] CheckinRequestDto checkinRequestDto)
         {
@@ -218,6 +226,26 @@ namespace FewBox.Service.Auth.Controllers
                 Type = c.Type,
                 Value = c.Value
             });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("sendverificationcode")]
+        public MetaResponseDto SendVerificationCode(string email)
+        {
+            this.TryCatchService.TryCatchWithoutNotification(() =>
+                {
+                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.NotificationConfig.Protocol}://{this.NotificationConfig.Host}:{this.NotificationConfig.Port}/api/notification", new Package<NotificationRequestDto>
+                    {
+                        Headers = new List<Header> { },
+                        Body = new NotificationRequestDto
+                        {
+                            ToAddresses = new List<string> { email },
+                            Name = "",
+                            Param = "" // Todo: need to implement.
+                        }
+                    });
+                });
+            return new MetaResponseDto();
         }
     }
 }
