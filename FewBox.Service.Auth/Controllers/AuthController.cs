@@ -109,7 +109,7 @@ namespace FewBox.Service.Auth.Controllers
                 else
                 {
                     Role role = this.RoleRepository.FindOneByCode("TENANT");
-                    var tenant = new Tenant { Name = validPayload.Email };
+                    var tenant = new Tenant { Name = $"google-{validPayload.Subject}" };
                     Guid tenantId = this.TenantRepository.Save(tenant);
                     Principal principal = new Principal { Name = validPayload.Name };
                     Guid principalId = this.PrincipalRepository.Save(principal);
