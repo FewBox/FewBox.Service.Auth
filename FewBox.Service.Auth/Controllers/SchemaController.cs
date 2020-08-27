@@ -272,7 +272,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 isExist = false;
                 principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
-                Guid userId = this.UserRepository.SaveWithMD5Password(new User { PrincipalId = principalId, TenantId = tenantId }, password);
+                Guid userId = this.UserRepository.SaveWithMD5Password(new User { Type = UserType.Form, PrincipalId = principalId, TenantId = tenantId }, password);
             }
             return principalId;
         }

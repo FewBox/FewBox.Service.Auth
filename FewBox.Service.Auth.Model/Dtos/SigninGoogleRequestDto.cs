@@ -2,6 +2,6 @@
 {
     public class SigninGoogleRequestDto
     {
-        public string IdToken { get; set; }
+        public string Token { get; set; }
     }
 }

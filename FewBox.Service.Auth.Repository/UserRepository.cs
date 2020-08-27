@@ -163,17 +163,17 @@ namespace FewBox.Service.Auth.Repository
 
         public bool IsGoogleAccountExists(string googleId)
         {
-            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where GoogleId='@GoogleId'", new { GoogleId = googleId }) > 0;
+            return this.UnitOfWork.Connection.ExecuteScalar<int>($"select count(1) from {this.TableName} where GoogleId=@GoogleId", new { GoogleId = googleId }) > 0;
         }
 
         public User FindOneByUserGoogleId(string googleId)
         {
-            return this.UnitOfWork.Connection.QuerySingleOrDefault<User>($"select * from {this.TableName} where GoogleId='@GoogleId'", new { GoogleId = googleId });
+            return this.UnitOfWork.Connection.QuerySingleOrDefault<User>($"select * from {this.TableName} where GoogleId=@GoogleId", new { GoogleId = googleId });
         }
 
-        public Guid SaveGoogleAccount(string googleId, string googleEmail)
+        public Guid SaveGoogleAccount(Guid tenantId, Guid principalId, string googleId, string googleEmail)
         {
-            User user = new User { GoogleId = googleId, GoogleEmail = googleEmail };
+            User user = new User { Type = UserType.Form, GoogleId = googleId, GoogleEmail = googleEmail, TenantId = tenantId, PrincipalId = principalId };
             return this.Save(user);
         }
     }

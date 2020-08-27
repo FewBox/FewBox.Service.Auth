@@ -22,7 +22,7 @@ namespace FewBox.Service.Auth.Model.Repositories
         #region Google
         bool IsGoogleAccountExists(string googleId);
         User FindOneByUserGoogleId(string googleId);
-        Guid SaveGoogleAccount(string googleId, string googleEmail);
+        Guid SaveGoogleAccount(Guid tenantId, Guid principalId, string googleId, string googleEmail);
         #endregion
     }
 }

@@ -27,12 +27,15 @@ namespace FewBox.Service.Auth.Controllers
         private IApiRepository ApiRepository { get; set; }
         private IRole_SecurityObjectRepository Role_SecurityObjectRepository { get; set; }
         private ITenantRepository TenantRepository { get; set; }
+        private IPrincipalRepository PrincipalRepository { get; set; }
+        private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private ITokenService TokenService { get; set; }
         private JWTConfig JWTConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
-        IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
+        IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
+        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, JWTConfig jWTConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
@@ -40,6 +43,8 @@ namespace FewBox.Service.Auth.Controllers
             this.ApiRepository = apiRepository;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;
             this.TenantRepository = tenantRepository;
+            this.PrincipalRepository = principalRepository;
+            this.Principal_RoleRepository = principal_RoleRepository;
             this.TokenService = tokenService;
             this.JWTConfig = jWTConfig;
             this.AuthConfig = authConfig;
@@ -85,7 +90,7 @@ namespace FewBox.Service.Auth.Controllers
         [HttpPost("signingoogle")]
         public async Task<PayloadResponseDto<SigninResponseDto>> SigninGoogleAsync([FromBody] SigninGoogleRequestDto signinGoogleRequestDto)
         {
-            GoogleJsonWebSignature.Payload validPayload = await GoogleJsonWebSignature.ValidateAsync(signinGoogleRequestDto.IdToken);
+            GoogleJsonWebSignature.Payload validPayload = await GoogleJsonWebSignature.ValidateAsync(signinGoogleRequestDto.Token);
             if (validPayload != null)
             {
                 Guid userId;
@@ -96,7 +101,13 @@ namespace FewBox.Service.Auth.Controllers
                 }
                 else
                 {
-                    userId = this.UserRepository.SaveGoogleAccount(validPayload.Subject, validPayload.Email);
+                    Role role = this.RoleRepository.FindOneByCode("TENANT");
+                    var tenant = new Tenant { Name = validPayload.Email };
+                    Guid tenantId = this.TenantRepository.Save(tenant);
+                    Principal principal = new Principal { Name = validPayload.Name };
+                    Guid principalId = this.PrincipalRepository.Save(principal);
+                    userId = this.UserRepository.SaveGoogleAccount(tenantId, principalId, validPayload.Subject, validPayload.Email);
+                    this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = role.Id });
                 }
                 var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
                              select new Claim(ClaimTypes.Role, role);
@@ -106,6 +117,7 @@ namespace FewBox.Service.Auth.Controllers
                 }
                 var userInfo = new UserInfo
                 {
+                    Tenant = validPayload.Email,
                     Id = userId,
                     Key = this.JWTConfig.Key,
                     Issuer = this.JWTConfig.Issuer,
