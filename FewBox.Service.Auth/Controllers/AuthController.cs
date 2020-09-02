@@ -33,14 +33,12 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private ITokenService TokenService { get; set; }
         private ITryCatchService TryCatchService { get; set; }
-        private NotificationConfig NotificationConfig { get; set; }
-        private JWTConfig JWTConfig { get; set; }
+        private FewBoxConfig FewBoxConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
         IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
-        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, ITryCatchService tryCatchService, NotificationConfig notificationConfig,
-        JWTConfig jWTConfig, AuthConfig authConfig)
+        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, ITryCatchService tryCatchService, FewBoxConfig fewBoxConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
@@ -52,8 +50,7 @@ namespace FewBox.Service.Auth.Controllers
             this.Principal_RoleRepository = principal_RoleRepository;
             this.TokenService = tokenService;
             this.TryCatchService = tryCatchService;
-            this.NotificationConfig = notificationConfig;
-            this.JWTConfig = jWTConfig;
+            this.FewBoxConfig = fewBoxConfig;
             this.AuthConfig = authConfig;
         }
 
@@ -77,8 +74,8 @@ namespace FewBox.Service.Auth.Controllers
                 {
                     Tenant = tenant.Name,
                     Id = userId.ToString(),
-                    Key = this.JWTConfig.Key,
-                    Issuer = this.JWTConfig.Issuer,
+                    Key = this.FewBoxConfig.JWT.Key,
+                    Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
@@ -126,8 +123,8 @@ namespace FewBox.Service.Auth.Controllers
                 {
                     Tenant = validPayload.Email,
                     Id = userId,
-                    Key = this.JWTConfig.Key,
-                    Issuer = this.JWTConfig.Issuer,
+                    Key = this.FewBoxConfig.JWT.Key,
+                    Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
@@ -156,8 +153,8 @@ namespace FewBox.Service.Auth.Controllers
                 {
                     Tenant = tenant.Name,
                     Id = userId.ToString(),
-                    Key = this.JWTConfig.Key,
-                    Issuer = this.JWTConfig.Issuer,
+                    Key = this.FewBoxConfig.JWT.Key,
+                    Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
@@ -205,8 +202,8 @@ namespace FewBox.Service.Auth.Controllers
             var userInfo = new UserInfo
             {
                 Id = Guid.NewGuid().ToString(),
-                Key = this.JWTConfig.Key,
-                Issuer = this.JWTConfig.Issuer,
+                Key = this.FewBoxConfig.JWT.Key,
+                Issuer = this.FewBoxConfig.JWT.Issuer,
                 Claims = claims
             };
             string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
@@ -234,7 +231,7 @@ namespace FewBox.Service.Auth.Controllers
         {
             this.TryCatchService.TryCatchWithoutNotification(() =>
                 {
-                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.NotificationConfig.Protocol}://{this.NotificationConfig.Host}:{this.NotificationConfig.Port}/api/notification", new Package<NotificationRequestDto>
+                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.FewBoxConfig.Notification.Protocol}://{this.FewBoxConfig.Notification.Host}:{this.FewBoxConfig.Notification.Port}/api/notification", new Package<NotificationRequestDto>
                     {
                         Headers = new List<Header> { },
                         Body = new NotificationRequestDto

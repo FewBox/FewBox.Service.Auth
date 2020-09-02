@@ -24,7 +24,6 @@ namespace FewBox.Service.Auth.Controllers
     [Authorize(Policy = "JWTRole_ControllerAction")]
     public class SchemaController : MapperController
     {
-        private SecurityConfig SecurityConfig { get; set; }
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
         private IGroupRepository GroupRepository { get; set; }
@@ -38,17 +37,15 @@ namespace FewBox.Service.Auth.Controllers
         private IServiceRepository ServiceRepository { get; set; }
         private ITenantRepository TenantRepository { get; set; }
         private InitialConfig InitialConfig { get; set; }
-        private NotificationConfig NotificationConfig { get; set; }
+        private FewBoxConfig FewBoxConfig { get; set; }
         private ITryCatchService TryCatchService { get; set; }
 
-        public SchemaController(SecurityConfig securityConfig, IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
+        public SchemaController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository,
-            ITenantRepository tenantRepository, InitialConfig initialConfig, NotificationConfig notificationConfig,
-            ITryCatchService tryCatchService, IMapper mapper) : base(mapper)
+            ITenantRepository tenantRepository, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, ITryCatchService tryCatchService, IMapper mapper) : base(mapper)
         {
-            this.SecurityConfig = securityConfig;
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
             this.GroupRepository = groupRepository;
@@ -62,7 +59,7 @@ namespace FewBox.Service.Auth.Controllers
             this.ServiceRepository = serviceRepository;
             this.TenantRepository = tenantRepository;
             this.InitialConfig = initialConfig;
-            this.NotificationConfig = notificationConfig;
+            this.FewBoxConfig = fewBoxConfig;
             this.TryCatchService = tryCatchService;
         }
 
@@ -422,7 +419,7 @@ namespace FewBox.Service.Auth.Controllers
             }
             this.TryCatchService.TryCatchWithoutNotification(() =>
                 {
-                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.NotificationConfig.Protocol}://{this.NotificationConfig.Host}:{this.NotificationConfig.Port}/api/notification", new Package<NotificationRequestDto>
+                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.FewBoxConfig.Notification.Protocol}://{this.FewBoxConfig.Notification.Host}:{this.FewBoxConfig.Notification.Port}/api/notification", new Package<NotificationRequestDto>
                     {
                         Headers = new List<Header> { },
                         Body = new NotificationRequestDto

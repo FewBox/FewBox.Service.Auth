@@ -1,37 +1,17 @@
-﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using FewBox.Core.Persistence.Orm;
-using FewBox.Core.Web.Config;
-using FewBox.Core.Web.Filter;
-using FewBox.Core.Web.Orm;
-using FewBox.Core.Web.Security;
-using FewBox.Core.Web.Token;
-using FewBox.Service.Auth.Domain;
+﻿using FewBox.Service.Auth.Domain;
 using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Service.Auth.Model.Services;
 using FewBox.Service.Auth.Repository;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using FewBox.Service.Auth.Model.Configs;
-using FewBox.Core.Web.Error;
-using FewBox.Core.Utility.Net;
-using FewBox.Core.Utility.Formatter;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using FewBox.Core.Web.Notification;
-using NSwag;
-using NSwag.Generation.Processors.Security;
-using Sentry.Extensibility;
 using Microsoft.Extensions.Hosting;
-using FewBox.Core.Web.Sentry;
+using FewBox.Core.Web.Extension;
+using NSwag;
+using NSwag.Generation.AspNetCore;
+using NSwag.Generation.Processors.Security;
+using FewBox.Service.Auth.Model.Configs;
 
 namespace FewBox.Service.Auth
 {
@@ -49,93 +29,21 @@ namespace FewBox.Service.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            RestfulUtility.IsCertificateNeedValidate = false;
-            RestfulUtility.IsLogging = true; // Todo: Need to remove.
-            JsonUtility.IsCamelCase = true;
-            JsonUtility.IsNullIgnore = true;
-            HttpUtility.IsCertificateNeedValidate = false;
-            HttpUtility.IsEnsureSuccessStatusCode = false;
-            services.AddRouting(options => options.LowercaseUrls = true);
-            services.AddMvc(options =>
-            {
-                options.CacheProfiles.Add("default", new Microsoft.AspNetCore.Mvc.CacheProfile
-                {
-                    Duration = 3600 // One hour.
-                });
-                if (this.Environment.IsDevelopment())
-                {
-                    options.Filters.Add(new AllowAnonymousFilter());
-                }
-                options.Filters.Add<TransactionAsyncFilter>();
-                options.Filters.Add<TraceAsyncFilter>();
-            })
-            .AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.IgnoreNullValues = true;
-            })
-            .SetCompatibilityVersion(CompatibilityVersion.Latest);
-            services.AddCors(
-                options =>
-                {
-                    options.AddDefaultPolicy(
-                        builder =>
-                        {
-                            builder
-                            .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            .WithOrigins("https://fewbox.com", "https://figma.com")
-                            .AllowCredentials()
-                            .SetIsOriginAllowedToAllowWildcardSubdomains();
-                        });
-                    options.AddPolicy("dev",
-                        builder =>
-                        {
-                            builder
-                            .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            //.AllowAnyOrigin()
-                            .WithOrigins("http://localhost", "https://localhost")
-                            .AllowCredentials()
-                            .SetIsOriginAllowedToAllowWildcardSubdomains();
-                        });
-
-                });
-            services.AddAutoMapper(typeof(Startup));
-            services.AddMemoryCache();
-            services.AddResponseCaching();
-            services.AddRouting(options => options.LowercaseUrls = true);
-            services.AddSingleton<IExceptionProcessorService, ExceptionProcessorService>();
-            // Used for Config.
-            // Used for [Authorize(Policy="JWTRole_ControllerAction")].
-            var jwtConfig = this.Configuration.GetSection("JWTConfig").Get<JWTConfig>();
-            services.AddSingleton(jwtConfig);
-            var securityConfig = this.Configuration.GetSection("SecurityConfig").Get<SecurityConfig>();
-            services.AddSingleton(securityConfig);
-            var healthyConfig = this.Configuration.GetSection("HealthyConfig").Get<HealthyConfig>();
-            services.AddSingleton(healthyConfig);
-            var notificationConfig = this.Configuration.GetSection("NotificationConfig").Get<NotificationConfig>();
-            services.AddSingleton(notificationConfig);
+            services.AddFewBox(FewBoxDBType.MySQL);
+            // Config
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);
             var initialConfig = this.Configuration.GetSection("InitialConfig").Get<InitialConfig>();
             services.AddSingleton(initialConfig);
-            // Used for RBAC AOP.
-            services.AddScoped<IAuthorizationHandler, RoleHandler>();
-            services.AddSingleton<IAuthorizationPolicyProvider, RoleAuthorizationPolicyProvider>();
-            services.AddScoped<IAuthService, LocalAuthService>();
-            // Used for ORM.
-            if(authConfig.OrmConfigurationType == OrmConfigurationTypeConfig.Tenant)
+            // Used for Swagger Open Api Document.
+            services.AddOpenApiDocument(config =>
             {
-                services.AddScoped<IOrmConfiguration, AppSettingTenantOrmConfiguration>();
-            }
-            else{
-                services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
-            }
-            //services.AddSingleton<IOrmConfiguration, AppSettingOrmConfiguration>();
-            
-            services.AddScoped<IOrmSession, MySqlSession>(); // Note: MySql
-            // services.AddScoped<IOrmSession, SQLiteSession>(); // Note: SQLite
-            services.AddScoped<ICurrentUser<Guid>, CurrentUser<Guid>>();
+                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v1", new[] { "1-alpha", "1-beta", "1" }, "v1");
+            });
+            services.AddOpenApiDocument(config =>
+            {
+                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v2", new[] { "2-alpha", "2-beta", "2" }, "v2");
+            });
             // Used for Application.
             services.AddScoped<IServiceRepository, ServiceRepository>();
             services.AddScoped<IPrincipalRepository, PrincipalRepository>();
@@ -151,71 +59,6 @@ namespace FewBox.Service.Auth
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
-            // Used for Exception.
-            // services.AddScoped<INotificationHandler, ConsoleNotificationHandler>();
-            services.AddScoped<INotificationHandler, ServiceNotificationHandler>();
-            services.AddScoped<ITryCatchService, TryCatchService>();
-            // Used for IHttpContextAccessor&IActionContextAccessor context.
-            services.AddHttpContextAccessor();
-            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
-            // Used for JWT.
-            services.AddScoped<ITokenService, JWTTokenService>();
-            services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddGoogle(options =>
-                {
-                    IConfigurationSection googleAuthNSection = this.Configuration.GetSection("Authentication:Google");
-                    options.ClientId = googleAuthNSection["ClientId"];
-                    options.ClientSecret = googleAuthNSection["ClientSecret"];
-                }
-            )
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtConfig.Issuer,
-                    ValidAudience = jwtConfig.Issuer,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key))
-                };
-            });
-            services.AddOpenApiDocument(config =>
-            {
-                config.PostProcess = document =>
-                {
-                    document.Info.Version = "v1";
-                    document.Info.Title = "FewBox Auth API";
-                    document.Info.Description = "FewBox Auth, for more information please visit the 'https://fewbox.com'";
-                    document.Info.TermsOfService = "https://fewbox.com/terms";
-                    document.Info.Contact = new OpenApiContact
-                    {
-                        Name = "FewBox",
-                        Email = "support@fewbox.com",
-                        Url = "https://fewbox.com/support"
-                    };
-                    document.Info.License = new OpenApiLicense
-                    {
-                        Name = "Use under license",
-                        Url = "https://raw.githubusercontent.com/FewBox/FewBox.Service.Auth/master/LICENSE"
-                    };
-                };
-                config.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT"));
-                config.DocumentProcessors.Add(
-                    new SecurityDefinitionAppender("JWT", new List<string> { "API" }, new OpenApiSecurityScheme
-                    {
-                        Type = OpenApiSecuritySchemeType.ApiKey,
-                        Name = "Authorization",
-                        Description = "Bearer [Token]",
-                        In = OpenApiSecurityApiKeyLocation.Header
-                    })
-                );
-            });
-            // Used for Sentry
-            services.AddTransient<ISentryEventProcessor, SentryEventProcessor>();
-            services.AddSingleton<ISentryEventExceptionProcessor, SentryEventExceptionProcessor>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -251,6 +94,45 @@ namespace FewBox.Service.Auth
             {
                 endpoints.MapControllers();
             });
+        }
+
+        private void InitAspNetCoreOpenApiDocumentGeneratorSettings(AspNetCoreOpenApiDocumentGeneratorSettings config, string documentName, string[] apiGroupNames, string documentVersion)
+        {
+            config.DocumentName = documentName;
+            config.ApiGroupNames = apiGroupNames;
+            config.PostProcess = document =>
+            {
+                this.InitDocumentInfo(document, documentVersion);
+            };
+            config.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT"));
+            config.DocumentProcessors.Add(
+                new SecurityDefinitionAppender("JWT", new OpenApiSecurityScheme
+                {
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    Description = "Bearer [Token]",
+                    In = OpenApiSecurityApiKeyLocation.Header
+                })
+            );
+        }
+
+        private void InitDocumentInfo(OpenApiDocument document, string version)
+        {
+            document.Info.Version = version;
+            document.Info.Title = "FewBox Demo Api";
+            document.Info.Description = "FewBox shipping, for more information please visit the 'https://fewbox.com'";
+            document.Info.TermsOfService = "https://fewbox.com/terms";
+            document.Info.Contact = new OpenApiContact
+            {
+                Name = "FewBox",
+                Email = "support@fewbox.com",
+                Url = "https://fewbox.com/support"
+            };
+            document.Info.License = new OpenApiLicense
+            {
+                Name = "Use under license",
+                Url = "https://fewbox.com/license"
+            };
         }
     }
 }
