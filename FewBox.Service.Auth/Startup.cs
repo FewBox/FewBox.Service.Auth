@@ -63,33 +63,33 @@ namespace FewBox.Service.Auth
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseResponseCaching();
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseOpenApi();
             app.UseStaticFiles();
-
             if (env.IsDevelopment())
             {
                 app.UseCors("dev");
                 app.UseSwaggerUi3();
                 app.UseDeveloperExceptionPage();
             }
-            if (env.IsStaging())
+            else
             {
                 app.UseCors();
+            }
+            if (env.IsStaging())
+            {
                 app.UseSwaggerUi3();
                 app.UseDeveloperExceptionPage();
             }
             if (env.IsProduction())
             {
-                app.UseCors();
-                app.UseReDoc();
+                app.UseReDoc(c => c.DocumentPath = "/swagger/v1/swagger.json");
+                app.UseReDoc(c => c.DocumentPath = "/swagger/v2/swagger.json");
                 app.UseHsts();
             }
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -119,8 +119,8 @@ namespace FewBox.Service.Auth
         private void InitDocumentInfo(OpenApiDocument document, string version)
         {
             document.Info.Version = version;
-            document.Info.Title = "FewBox Demo Api";
-            document.Info.Description = "FewBox shipping, for more information please visit the 'https://fewbox.com'";
+            document.Info.Title = "FewBox Auth Api";
+            document.Info.Description = "FewBox Auth, for more information please visit the 'https://fewbox.com'";
             document.Info.TermsOfService = "https://fewbox.com/terms";
             document.Info.Contact = new OpenApiContact
             {
