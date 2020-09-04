@@ -12,6 +12,7 @@ using NSwag;
 using NSwag.Generation.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FewBox.Service.Auth
 {
@@ -29,7 +30,7 @@ namespace FewBox.Service.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddFewBox(FewBoxDBType.MySQL);
+            services.AddFewBox(FewBoxDBType.MySQL, new ApiVersion(1, 0, "alpha1"));
             // Config
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);
@@ -38,11 +39,11 @@ namespace FewBox.Service.Auth
             // Used for Swagger Open Api Document.
             services.AddOpenApiDocument(config =>
             {
-                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v1", new[] { "1-alpha", "1-beta", "1" }, "v1");
+                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v1", new[] { "1-alpha1", "1-beta1", "1" }, "v1");
             });
             services.AddOpenApiDocument(config =>
             {
-                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v2", new[] { "2-alpha", "2-beta", "2" }, "v2");
+                this.InitAspNetCoreOpenApiDocumentGeneratorSettings(config, "v2", new[] { "2-alpha2", "2-beta2", "2" }, "v2");
             });
             // Used for Application.
             services.AddScoped<IServiceRepository, ServiceRepository>();

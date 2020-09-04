@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace FewBox.Service.Auth.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{v:apiVersion}/[controller]")]
     [Authorize(Policy = "JWTRole_ControllerAction")]
     public class RolesController : ResourcesController<IRoleRepository, Role, RoleDto, RolePersistantDto>
     {

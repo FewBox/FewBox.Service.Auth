@@ -8,7 +8,7 @@ using S = FewBox.Service.Auth.Model.Entities;
 
 namespace FewBox.Service.Auth.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{v:apiVersion}/[controller]")]
     [Authorize(Policy="JWTRole_ControllerAction")]
     public class ServicesController : ResourcesController<IServiceRepository, S.Service, ServiceDto, ServicePersistantDto>
     {
