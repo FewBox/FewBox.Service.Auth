@@ -14,7 +14,6 @@ using FewBox.Core.Web.Config;
 using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Linq;
-using FewBox.Core.Web.Error;
 using FewBox.Core.Utility.Net;
 using System.Text;
 
@@ -38,13 +37,12 @@ namespace FewBox.Service.Auth.Controllers
         private ITenantRepository TenantRepository { get; set; }
         private InitialConfig InitialConfig { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
-        private ITryCatchService TryCatchService { get; set; }
 
         public SchemaController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository,
-            ITenantRepository tenantRepository, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, ITryCatchService tryCatchService, IMapper mapper) : base(mapper)
+            ITenantRepository tenantRepository, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, IMapper mapper) : base(mapper)
         {
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
@@ -60,7 +58,6 @@ namespace FewBox.Service.Auth.Controllers
             this.TenantRepository = tenantRepository;
             this.InitialConfig = initialConfig;
             this.FewBoxConfig = fewBoxConfig;
-            this.TryCatchService = tryCatchService;
         }
 
         [AllowAnonymous]
@@ -417,19 +414,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 param.AppendLine($"{password.Key} : {password.Value}");
             }
-            this.TryCatchService.TryCatchWithoutNotification(() =>
-                {
-                    RestfulUtility.Post<NotificationRequestDto, NotificationResponseDto>($"{this.FewBoxConfig.Notification.Protocol}://{this.FewBoxConfig.Notification.Host}:{this.FewBoxConfig.Notification.Port}/api/notification", new Package<NotificationRequestDto>
-                    {
-                        Headers = new List<Header> { },
-                        Body = new NotificationRequestDto
-                        {
-                            ToAddresses = new List<string> { this.InitialConfig.SystemEmail },
-                            Name = name,
-                            Param = param.ToString()
-                        }
-                    });
-                });
+            // Todo: OpsNotification
         }
     }
 }
