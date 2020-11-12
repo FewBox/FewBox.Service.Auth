@@ -18,6 +18,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
     [ApiController]
+    [Authorize]
     [Authorize(Policy = "JWTRole_ControllerAction")]
     public class AuthController : ControllerBase
     {
@@ -74,7 +75,7 @@ namespace FewBox.Service.Auth.Controllers
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
-                string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
                     Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
@@ -123,7 +124,7 @@ namespace FewBox.Service.Auth.Controllers
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
-                string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
                     Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
@@ -153,7 +154,7 @@ namespace FewBox.Service.Auth.Controllers
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Claims = claims
                 };
-                string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<CheckinResponseDto>
                 {
                     Payload = new CheckinResponseDto { IsValid = true, Token = token }
@@ -202,7 +203,7 @@ namespace FewBox.Service.Auth.Controllers
                 Issuer = this.FewBoxConfig.JWT.Issuer,
                 Claims = claims
             };
-            string token = this.TokenService.GenerateToken(userInfo, this.AuthConfig.ExpireTime);
+            string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
             return new PayloadResponseDto<RenewTokenResponseDto>
             {
                 Payload = new RenewTokenResponseDto { Token = token }

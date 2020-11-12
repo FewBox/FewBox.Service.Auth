@@ -30,7 +30,7 @@ namespace FewBox.Service.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddFewBox(FewBoxDBType.MySQL, new ApiVersion(1, 0, "alpha1"));
+            services.AddFewBox(FewBoxDBType.MySQL, FewBoxAuthType.Payload, new ApiVersion(1, 0, "alpha1"));
             // Config
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);
