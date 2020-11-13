@@ -67,10 +67,12 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Module> FindAllByUserId(Guid userId)
         {
-            return this.UnitOfWork.Connection.Query<Module>(
-                $@"select * from {this.TableName} where SecurityObjectId in
+            return this.UnitOfWork.Connection.Query<Module, SecurityObject, Module>(
+                $@"select * from {this.TableName} left join securityobject on {this.TableName}.SecurityObjectId = securityobject.Id where SecurityObjectId in
                 (select SecurityObjectId from role_security where RoleId in
-                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))", new { UserId = userId });
+                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))",
+                (module, secuirtyObject) => { module.ServiceId = secuirtyObject.ServiceId; return module; },
+                new { UserId = userId });
         }
 
         public bool IsExist(Guid serviceId, string code)

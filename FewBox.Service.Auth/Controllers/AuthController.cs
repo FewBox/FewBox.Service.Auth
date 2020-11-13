@@ -64,16 +64,20 @@ namespace FewBox.Service.Auth.Controllers
                              select new Claim(ClaimTypes.Role, role);
                 if (claims != null)
                 {
-                    var moduleClaims = from module in this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code)
-                                       select new Claim("Module", module);
-                    claims.Concat(moduleClaims);
-                    var apiClaims = from api in this.ApiRepository.FindAllByUserId(userId).Select(a =>
-                                    {
-                                        var service = this.ServiceRepository.FindOne(a.ServiceId);
-                                        return $"{service.Name}/{a.Controller}/{a.Action}";
-                                    })
-                                    select new Claim(TokenClaims.Api, api);
-                    claims.Concat(apiClaims);
+                    var modules = this.ModuleRepository.FindAllByUserId(userId);
+                    foreach(var module in modules)
+                    {
+                        var service = this.ServiceRepository.FindOne(module.ServiceId);
+                        string moduleKey = $"{service.Name}/{module.Code}";
+                        claims.Append(new Claim(TokenClaims.Module, moduleKey));
+                    }
+                    var apis = this.ApiRepository.FindAllByUserId(userId);
+                    foreach(var api in apis)
+                    {
+                        var service = this.ServiceRepository.FindOne(api.ServiceId);
+                        string apiKey = $"{service.Name}/{api.Controller}/{api.Action}";
+                        claims.Append(new Claim(TokenClaims.Api, apiKey));
+                    }
                 }
                 var userInfo = new UserInfo
                 {
@@ -82,7 +86,7 @@ namespace FewBox.Service.Auth.Controllers
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Audience = this.FewBoxConfig.JWT.Audience,
-                    Claims = claims
+                    Claims = claims // Todo: Add claims.
                 };
                 string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>

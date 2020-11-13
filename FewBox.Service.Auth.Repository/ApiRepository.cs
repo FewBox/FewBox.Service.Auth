@@ -21,10 +21,12 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Api> FindAllByUserId(Guid userId)
         {
-            return this.UnitOfWork.Connection.Query<Api>(
-                $@"select * from {this.TableName} where SecurityObjectId in
+            return this.UnitOfWork.Connection.Query<Api, SecurityObject, Api>(
+                $@"select * from {this.TableName} left join securityobject on {this.TableName}.SecurityObjectId = securityobject.Id where SecurityObjectId in
                 (select SecurityObjectId from role_security where RoleId in
-                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))", new { UserId = userId });
+                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))",
+                (api, secuirtyObject) => { api.ServiceId = secuirtyObject.ServiceId; return api; },
+                new { UserId = userId });
         }
 
         public Api FindOneByServiceAndControllerAndAction(Guid serviceId, string controller, string action)
