@@ -18,7 +18,6 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
     [ApiController]
-    [Authorize]
     [Authorize(Policy = "JWTRole_ControllerAction")]
     public class AuthController : ControllerBase
     {
@@ -30,13 +29,14 @@ namespace FewBox.Service.Auth.Controllers
         private ITenantRepository TenantRepository { get; set; }
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
+        private IServiceRepository ServiceRepository { get; set; }
         private ITokenService TokenService { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
         IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
-        IPrincipal_RoleRepository principal_RoleRepository, ITokenService tokenService, FewBoxConfig fewBoxConfig, AuthConfig authConfig)
+        IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository, ITokenService tokenService, FewBoxConfig fewBoxConfig, AuthConfig authConfig)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
@@ -46,6 +46,7 @@ namespace FewBox.Service.Auth.Controllers
             this.TenantRepository = tenantRepository;
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
+            this.ServiceRepository = serviceRepository;
             this.TokenService = tokenService;
             this.FewBoxConfig = fewBoxConfig;
             this.AuthConfig = authConfig;
@@ -66,6 +67,13 @@ namespace FewBox.Service.Auth.Controllers
                     var moduleClaims = from module in this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code)
                                        select new Claim("Module", module);
                     claims.Concat(moduleClaims);
+                    var apiClaims = from api in this.ApiRepository.FindAllByUserId(userId).Select(a =>
+                                    {
+                                        var service = this.ServiceRepository.FindOne(a.ServiceId);
+                                        return $"{service.Name}/{a.Controller}/{a.Action}";
+                                    })
+                                    select new Claim(TokenClaims.Api, api);
+                    claims.Concat(apiClaims);
                 }
                 var userInfo = new UserInfo
                 {
@@ -73,6 +81,7 @@ namespace FewBox.Service.Auth.Controllers
                     Id = userId.ToString(),
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
+                    Audience = this.FewBoxConfig.JWT.Audience,
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
@@ -122,6 +131,7 @@ namespace FewBox.Service.Auth.Controllers
                     Id = userId,
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
+                    Audience = this.FewBoxConfig.JWT.Audience,
                     Claims = claims
                 };
                 string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));

@@ -19,6 +19,14 @@ namespace FewBox.Service.Auth.Repository
             return this.UnitOfWork.Connection.Query<Api>($"select * from {this.TableName} where Controller like @Controller", new { Controller = "%" + keyword + "%" });
         }
 
+        public IEnumerable<Api> FindAllByUserId(Guid userId)
+        {
+            return this.UnitOfWork.Connection.Query<Api>(
+                $@"select * from {this.TableName} where SecurityObjectId in
+                (select SecurityObjectId from role_security where RoleId in
+                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))", new { UserId = userId });
+        }
+
         public Api FindOneByServiceAndControllerAndAction(Guid serviceId, string controller, string action)
         {
             return this.UnitOfWork.Connection.QuerySingleOrDefault<Api>($"select * from {this.TableName} where Controller=@Controller and Action=@Action and SecurityObjectId in (select Id from securityobject where ServiceId = @ServiceId)",

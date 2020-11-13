@@ -13,6 +13,7 @@ using NSwag.Generation.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace FewBox.Service.Auth
 {
@@ -64,37 +65,7 @@ namespace FewBox.Service.Auth
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.UseOpenApi();
-            app.UseStaticFiles();
-            if (env.IsDevelopment())
-            {
-                app.UseCors("dev");
-                app.UseSwaggerUi3();
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseCors();
-            }
-            if (env.IsStaging())
-            {
-                app.UseSwaggerUi3();
-                app.UseDeveloperExceptionPage();
-            }
-            if (env.IsProduction())
-            {
-                app.UseReDoc(c => c.DocumentPath = "/swagger/v1/swagger.json");
-                app.UseReDoc(c => c.DocumentPath = "/swagger/v2/swagger.json");
-                app.UseHsts();
-            }
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseFewBox(new List<string>{"/swagger/v1/swagger.json","/swagger/v2/swagger.json"} );
         }
 
         private void InitAspNetCoreOpenApiDocumentGeneratorSettings(AspNetCoreOpenApiDocumentGeneratorSettings config, string documentName, string[] apiGroupNames, string documentVersion)

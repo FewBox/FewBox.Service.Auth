@@ -12,7 +12,6 @@ namespace FewBox.Service.Auth.Controllers
 {
     [ApiController]
     [Route("api/v{v:apiVersion}/[controller]")]
-    [Authorize]
     [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class TokenController : ControllerBase
     {

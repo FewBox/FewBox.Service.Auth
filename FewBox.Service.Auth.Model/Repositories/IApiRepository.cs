@@ -11,5 +11,6 @@ namespace FewBox.Service.Auth.Model.Repositories
         Api FindOneByServiceAndControllerAndAction(Guid serviceId, string controller, string action);
         Api FindOneByServiceAndControllerAndAction(string service, string controller, string action);
         IEnumerable<Api> FindAllByKeyword(string keyword);
+        IEnumerable<Api> FindAllByUserId(Guid userid);
     }
 }
