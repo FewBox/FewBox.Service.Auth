@@ -31,8 +31,8 @@ namespace FewBox.Service.Auth.Controllers
             this.RoleRepository = roleRepository;
         }
   
-        [HttpGet("search/{keyword}")]
-        public PayloadResponseDto<IEnumerable<UserDto>> Get(string keyword)
+        [HttpGet("search")]
+        public PayloadResponseDto<IEnumerable<UserDto>> Get([FromQuery] string keyword)
         {
             return new PayloadResponseDto<IEnumerable<UserDto>>
             {
