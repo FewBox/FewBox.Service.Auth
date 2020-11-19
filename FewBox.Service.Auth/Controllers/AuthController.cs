@@ -18,7 +18,7 @@ namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
     [ApiController]
-    [Authorize(Policy = "JWTRole_ControllerAction")]
+    [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class AuthController : ControllerBase
     {
         private IUserRepository UserRepository { get; set; }
@@ -91,7 +91,7 @@ namespace FewBox.Service.Auth.Controllers
                 string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
-                    Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
+                    Payload = new SigninResponseDto { IsValid = true, Token = token }
                 };
             }
             return new PayloadResponseDto<SigninResponseDto>
@@ -141,7 +141,7 @@ namespace FewBox.Service.Auth.Controllers
                 string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
-                    Payload = new SigninResponseDto { IsValid = true, Token = token, AuthorizedModules = this.ModuleRepository.FindAllByUserId(userId).Select(m => m.Code).ToList() }
+                    Payload = new SigninResponseDto { IsValid = true, Token = token }
                 };
             }
             return new PayloadResponseDto<SigninResponseDto>

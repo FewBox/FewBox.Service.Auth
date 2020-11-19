@@ -6,6 +6,5 @@ namespace FewBox.Service.Auth.Model.Dtos
     {
         public bool IsValid { get; set; }
         public string Token { get; set; }
-        public IList<string> AuthorizedModules{get;set;}
     }
 }

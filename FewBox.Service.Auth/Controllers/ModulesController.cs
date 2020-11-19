@@ -14,7 +14,7 @@ using FewBox.Core.Web.Controller;
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
-    [Authorize(Policy="JWTRole_ControllerAction")]
+    [Authorize(Policy="JWTPayload_ControllerAction")]
     public class ModulesController : ResourcesController<IModuleRepository, Module, ModuleDto, ModulePersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
