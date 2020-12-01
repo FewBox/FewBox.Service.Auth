@@ -10,6 +10,7 @@ namespace FewBox.Service.Auth.Model.Repositories
         bool IsPasswordValid(string username, string password, out Guid userId, out Guid tenantId);
         bool IsPasswordValid(Guid userId, string password);
         User FindOneByUsername(string username, UserType userType);
+        User FindOneByEmail(string email);
         User FindOneByUsername(string username);
         Guid SaveWithMD5Password(User user, string password);
         bool IsExist(string email);

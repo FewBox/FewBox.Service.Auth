@@ -14,6 +14,9 @@ using NSwag.Generation.Processors.Security;
 using FewBox.Service.Auth.Model.Configs;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using FewBox.SDK.Extension;
+using FewBox.SDK.Auth;
+using FewBox.SDK.Mail;
 
 namespace FewBox.Service.Auth
 {
@@ -32,6 +35,7 @@ namespace FewBox.Service.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddFewBox(FewBoxDBType.MySQL, FewBoxAuthType.Payload, new ApiVersion(1, 0, "alpha1"));
+            services.AddFewBoxSDK(FewBoxIntegrationType.MessageQueue, FewBoxListenerHostType.Web, FewBoxListenerType.Plan);
             // Config
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);
@@ -61,6 +65,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
+            services.AddSingleton<IMQPlanHandler, MQPlanHandler>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

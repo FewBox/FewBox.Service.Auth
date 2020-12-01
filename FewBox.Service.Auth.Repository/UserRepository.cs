@@ -30,6 +30,11 @@ namespace FewBox.Service.Auth.Repository
                 new { Id = id }).SingleOrDefault();
         }
 
+        public User FindOneByEmail(string email)
+        {
+            return this.UnitOfWork.Connection.Query<User>($"select * freom {this.TableName} where Email = @Eamil", new { Email = email }).SingleOrDefault();
+        }
+
         public new IEnumerable<User> FindAll()
         {
             return this.UnitOfWork.Connection.Query<User, Principal, User>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id",
