@@ -3,6 +3,7 @@ using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Persistence.Orm;
 using System;
 using Dapper;
+using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
@@ -11,6 +12,11 @@ namespace FewBox.Service.Auth.Repository
         public TenantRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("tenant", ormSession, currentUser)
         {
+        }
+
+        public IEnumerable<Tenant> FindAllByKeyword(string keyword)
+        {
+            return this.UnitOfWork.Connection.Query<Tenant>($"select * from {this.TableName} where Name like @Name", new { Name = "%" + keyword + "%" });
         }
 
         public Tenant FindOneByName(string name)

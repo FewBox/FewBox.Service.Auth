@@ -60,35 +60,18 @@ namespace FewBox.Service.Auth.Controllers
             if (this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId, out tenantId))
             {
                 Tenant tenant = this.TenantRepository.FindOne(tenantId);
-                var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
-                             select new Claim(ClaimTypes.Role, role);
-                if (claims != null)
-                {
-                    var modules = this.ModuleRepository.FindAllByUserId(userId);
-                    foreach(var module in modules)
-                    {
-                        var service = this.ServiceRepository.FindOne(module.ServiceId);
-                        string moduleKey = $"{service.Name}/{module.Code}";
-                        claims.Append(new Claim(TokenClaims.Module, moduleKey));
-                    }
-                    var apis = this.ApiRepository.FindAllByUserId(userId);
-                    foreach(var api in apis)
-                    {
-                        var service = this.ServiceRepository.FindOne(api.ServiceId);
-                        string apiKey = $"{service.Name}/{api.Controller}/{api.Action}";
-                        claims.Append(new Claim(TokenClaims.Api, apiKey));
-                    }
-                }
-                var userInfo = new UserInfo
+                var userProfile = new UserProfile
                 {
                     Tenant = tenant.Name,
                     Id = userId.ToString(),
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Audience = this.FewBoxConfig.JWT.Audience,
-                    Claims = claims // Todo: Add claims.
+                    Roles = this.GetRoles(userId),
+                    Modules = this.GetModules(userId),
+                    Apis = this.GetApis(userId)
                 };
-                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
+                string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
                     Payload = new SigninResponseDto { IsValid = true, Token = token }
@@ -123,22 +106,18 @@ namespace FewBox.Service.Auth.Controllers
                     userId = this.UserRepository.SaveGoogleAccount(tenantId, principalId, validPayload.Subject, validPayload.Email);
                     this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = role.Id });
                 }
-                var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
-                             select new Claim(ClaimTypes.Role, role);
-                if (claims == null)
-                {
-                    claims = new List<Claim>();
-                }
-                var userInfo = new UserInfo
+                var userProfile = new UserProfile
                 {
                     Tenant = validPayload.Email,
-                    Id = userId,
+                    Id = userId.ToString(),
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Audience = this.FewBoxConfig.JWT.Audience,
-                    Claims = claims
+                    Roles = this.GetRoles(userId),
+                    Modules = this.GetModules(userId),
+                    Apis = this.GetApis(userId)
                 };
-                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
+                string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
                     Payload = new SigninResponseDto { IsValid = true, Token = token }
@@ -158,17 +137,17 @@ namespace FewBox.Service.Auth.Controllers
             if (this.UserRepository.IsPasswordValid(checkinRequestDto.AccessKey, checkinRequestDto.SecurityKey, out userId, out tenantId))
             {
                 Tenant tenant = this.TenantRepository.FindOne(tenantId);
-                var claims = from role in (from role in this.RoleRepository.FindAllByUserId(userId) select role.Code)
-                             select new Claim(ClaimTypes.Role, role);
-                var userInfo = new UserInfo
+                var userProfile = new UserProfile
                 {
                     Tenant = tenant.Name,
                     Id = userId.ToString(),
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
-                    Claims = claims
+                    Roles = this.GetRoles(userId),
+                    Modules = this.GetModules(userId),
+                    Apis = this.GetApis(userId)
                 };
-                string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
+                string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<CheckinResponseDto>
                 {
                     Payload = new CheckinResponseDto { IsValid = true, Token = token }
@@ -208,16 +187,8 @@ namespace FewBox.Service.Auth.Controllers
         [HttpPost("renewtoken")]
         public PayloadResponseDto<RenewTokenResponseDto> RenewToken([FromBody] RenewTokenRequestDto renewTokenRequestDto)
         {
-            var claims = this.HttpContext.User.Claims.Where(
-                c => c.Type == ClaimTypes.Role);
-            var userInfo = new UserInfo
-            {
-                Id = Guid.NewGuid().ToString(),
-                Key = this.FewBoxConfig.JWT.Key,
-                Issuer = this.FewBoxConfig.JWT.Issuer,
-                Claims = claims
-            };
-            string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(this.AuthConfig.ExpireTime));
+            var userProfile = this.TokenService.GetUserProfileByToken(this.HttpContext.Request.Headers["Authorization"]);
+            string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
             return new PayloadResponseDto<RenewTokenResponseDto>
             {
                 Payload = new RenewTokenResponseDto { Token = token }
@@ -242,6 +213,21 @@ namespace FewBox.Service.Auth.Controllers
         {
             // Todo: Notification
             return new MetaResponseDto();
+        }
+
+        private IList<string> GetRoles(Guid userId)
+        {
+            return this.RoleRepository.FindAllByUserId(userId).Select(role => role.Code).ToList();
+        }
+
+        private IList<string> GetApis(Guid userId)
+        {
+            return this.ApiRepository.FindAllByUserId(userId).Select(api => $"{this.ServiceRepository.FindOne(api.ServiceId).Name}/{api.Controller}/{api.Action}").ToList();
+        }
+
+        private IList<string> GetModules(Guid userId)
+        {
+            return this.ModuleRepository.FindAllByUserId(userId).Select(module => $"{this.ServiceRepository.FindOne(module.ServiceId).Name}/{module.Code}").ToList();
         }
     }
 }

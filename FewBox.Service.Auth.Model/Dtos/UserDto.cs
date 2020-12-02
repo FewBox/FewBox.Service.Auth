@@ -13,5 +13,6 @@ namespace FewBox.Service.Auth.Model.Dtos
         public string Email { get; set; }
         public string Mobile { get; set; }
         public Guid PrincipalId { get; set; }
+        public Guid TenantId { get; set; }
     }
 }

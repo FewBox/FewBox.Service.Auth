@@ -30,19 +30,17 @@ namespace FewBox.Service.Auth.Controllers
                 timeSpan = TimeSpan.FromHours(2);
             }
             string service = Assembly.GetEntryAssembly().GetName().Name;
-            var apiClaims = apis.Select(api => new Claim(TokenClaims.Api, $"{service}/{api}"));
-            var claims = new List<Claim> { new Claim(ClaimTypes.Role, "Admin") };
-            claims.AddRange(apiClaims);
-            var userInfo = new UserInfo
+            var userProfile = new UserProfile
             {
                 Tenant = tenant,
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 Key = jwtKey,
                 Issuer = jwtIssuer,
                 Audience = audience,
-                Claims = claims
+                Apis = apis.Select(api => $"{service}/{api}").ToList(),
+                Roles = new List<string> { "Admin" }
             };
-            string token = this.TokenService.GenerateToken(userInfo, DateTime.Now.Add(timeSpan.Value));
+            string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(timeSpan.Value));
             return new PayloadResponseDto<string>
             {
                 Payload = $"Bearer {token}"
