@@ -55,10 +55,10 @@ namespace FewBox.Service.Auth.Controllers
         [Transaction]
         public override PayloadResponseDto<Guid> Post([FromBody] UserPersistantDto userDto)
         {
-            string tenantName = userDto.Email.Split('@')[1];
+            string tenantName = String.IsNullOrEmpty(userDto.Tenant) ? userDto.Email.Split('@')[1] : userDto.Tenant;
             var tenant = this.TenantRepository.FindOneByName(tenantName);
             Guid tenantId;
-            if(tenant == null)
+            if (tenant == null)
             {
                 tenant = new Tenant { Name = tenantName };
                 tenantId = this.TenantRepository.Save(tenant);
@@ -132,9 +132,10 @@ namespace FewBox.Service.Auth.Controllers
         {
             var updateUser = this.Repository.FindOne(id);
             this.PrincipalRepository.Recycle(updateUser.PrincipalId);
+            int effectRow = this.Repository.Recycle(id);
             return new PayloadResponseDto<int>
             {
-                Payload = this.Repository.Recycle(id)
+                Payload = effectRow
             };
         }
 

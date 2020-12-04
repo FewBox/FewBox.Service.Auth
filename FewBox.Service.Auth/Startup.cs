@@ -65,7 +65,7 @@ namespace FewBox.Service.Auth
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<ILDAPService, LDAPService>();
-            services.AddSingleton<IMQPlanHandler, MQPlanHandler>();
+            services.AddScoped<IMQPlanHandler, MQPlanHandler>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

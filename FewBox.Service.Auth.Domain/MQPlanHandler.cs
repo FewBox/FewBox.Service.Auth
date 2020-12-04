@@ -1,41 +1,81 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using FewBox.SDK.Auth;
 using FewBox.SDK.Core;
+using FewBox.SDK.Mail;
 using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace FewBox.Service.Auth.Domain
 {
     public class MQPlanHandler : IMQPlanHandler
     {
+        private ITenantRepository TenantRepository { get; set; }
+        private IPrincipalRepository PrincipalRepository { get; set; }
         private IUserRepository UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
-        public MQPlanHandler(IUserRepository userRepository, IRoleRepository roleRepository, IPrincipal_RoleRepository principal_RoleRepository)
+        private IMailService MailService { get; set; }
+        private ILogger Logger { get; set; }
+        public MQPlanHandler(ITenantRepository tenantRepository, IPrincipalRepository principalRepository, IUserRepository userRepository, IRoleRepository roleRepository,
+        IPrincipal_RoleRepository principal_RoleRepository, IMailService mailService, ILogger<MQPlanHandler> logger)
         {
+            this.TenantRepository = tenantRepository;
+            this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
+            this.MailService = mailService;
+            this.Logger = logger;
         }
         public Func<PlanMessage, bool> Handle()
         {
             return (planMessage) =>
             {
                 User user = this.UserRepository.FindOneByEmail(planMessage.Customer.Email);
+                Tenant tenant = this.TenantRepository.FindOneByName("fewbox.com");
+                if (user == null)
+                {
+                    user = new User();
+                    var principal = new Principal { Name = planMessage.Customer.Email };
+                    principal.PrincipalType = PrincipalType.User;
+                    Guid principalId = this.PrincipalRepository.Save(principal);
+                    user.PrincipalId = principalId;
+                    user.TenantId = tenant.Id;
+                    string password = this.GenerateRandomPassword();
+                    Guid userId = this.UserRepository.SaveWithMD5Password(user, password);
+                    this.MailService.SendOpsNotification("", $"Wellcome to join us, your password is: {password}", new List<string> { planMessage.Customer.Email });
+                }
                 Role proRole = this.RoleRepository.FindOneByCode($"{planMessage.Product.Name.ToUpper()}PRO");
+                Guid proRoleId;
+                if (proRole == null)
+                {
+                    proRole = new Role { Name = $"{planMessage.Product.Name}Pro", Code = $"{planMessage.Product.Name.ToUpper()}PRO" };
+                    proRoleId = this.RoleRepository.Save(proRole);
+                }
+                else
+                {
+                    proRoleId = proRole.Id;
+                }
                 switch (planMessage.Type)
                 {
                     case PlanType.Pro:
-                        this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = user.PrincipalId, RoleId = proRole.Id });
+                        // Todo: Current User issue.
+                        this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = user.PrincipalId, RoleId = proRoleId });
                         break;
                     case PlanType.Free:
-                        Principal_Role principal_ProRole = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(user.PrincipalId, proRole.Id);
-                        this.Principal_RoleRepository.Delete(principal_ProRole.Id);
+                        Principal_Role principal_ProRole = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(user.PrincipalId, proRoleId);
+                        if (principal_ProRole != null)
+                        {
+                            this.Principal_RoleRepository.Delete(principal_ProRole.Id);
+                        }
                         Role freeRole = this.RoleRepository.FindOneByCode($"{planMessage.Product.Name.ToUpper()}FREE");
                         Guid freeRoleId;
                         if (freeRole == null)
                         {
-                            freeRole = new Role { Name = "SmartFree", Code = "SMARTFREE" };
+                            freeRole = new Role { Name = $"{planMessage.Product.Name}Pro", Code = $"{planMessage.Product.Name.ToUpper()}PRO" };
                             freeRoleId = this.RoleRepository.Save(freeRole);
                         }
                         else
@@ -53,6 +93,47 @@ namespace FewBox.Service.Auth.Domain
                 }
                 return true;
             };
+        }
+
+        private string GenerateRandomPassword()
+        {
+            StringBuilder password = new StringBuilder();
+            Random random = new Random();
+            bool nonAlphanumeric = true;
+            bool digit = true;
+            bool lowercase = true;
+            bool uppercase = true;
+            int length = 6;
+            while (password.Length < length)
+            {
+                char c = (char)random.Next(32, 126);
+                password.Append(c);
+                if (char.IsDigit(c))
+                    digit = false;
+                else if (char.IsLower(c))
+                    lowercase = false;
+                else if (char.IsUpper(c))
+                    uppercase = false;
+                else if (!char.IsLetterOrDigit(c))
+                    nonAlphanumeric = false;
+            }
+            if (nonAlphanumeric)
+            {
+                password.Append((char)random.Next(33, 48));
+            }
+            if (digit)
+            {
+                password.Append((char)random.Next(48, 58));
+            }
+            if (lowercase)
+            {
+                password.Append((char)random.Next(97, 123));
+            }
+            if (uppercase)
+            {
+                password.Append((char)random.Next(65, 91));
+            }
+            return password.ToString();
         }
     }
 }

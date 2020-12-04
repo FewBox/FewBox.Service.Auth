@@ -32,7 +32,7 @@ namespace FewBox.Service.Auth.Repository
 
         public User FindOneByEmail(string email)
         {
-            return this.UnitOfWork.Connection.Query<User>($"select * freom {this.TableName} where Email = @Eamil", new { Email = email }).SingleOrDefault();
+            return this.UnitOfWork.Connection.Query<User>($"select * from {this.TableName} where Email = @Email", new { Email = email }).SingleOrDefault();
         }
 
         public new IEnumerable<User> FindAll()

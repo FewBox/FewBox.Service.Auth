@@ -59,18 +59,7 @@ namespace FewBox.Service.Auth.Controllers
             Guid userId, tenantId;
             if (this.UserRepository.IsPasswordValid(signinRequestDto.Username, signinRequestDto.Password, out userId, out tenantId))
             {
-                Tenant tenant = this.TenantRepository.FindOne(tenantId);
-                var userProfile = new UserProfile
-                {
-                    Tenant = tenant.Name,
-                    Id = userId.ToString(),
-                    Key = this.FewBoxConfig.JWT.Key,
-                    Issuer = this.FewBoxConfig.JWT.Issuer,
-                    Audience = this.FewBoxConfig.JWT.Audience,
-                    Roles = this.GetRoles(userId),
-                    Modules = this.GetModules(userId),
-                    Apis = this.GetApis(userId)
-                };
+                var userProfile = this.GetUserProfile(tenantId, userId);
                 string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
                 {
@@ -137,12 +126,16 @@ namespace FewBox.Service.Auth.Controllers
             if (this.UserRepository.IsPasswordValid(checkinRequestDto.AccessKey, checkinRequestDto.SecurityKey, out userId, out tenantId))
             {
                 Tenant tenant = this.TenantRepository.FindOne(tenantId);
+                User user = this.UserRepository.FindOne(userId);
                 var userProfile = new UserProfile
                 {
                     Tenant = tenant.Name,
                     Id = userId.ToString(),
+                    Name = user.Name,
                     Key = this.FewBoxConfig.JWT.Key,
                     Issuer = this.FewBoxConfig.JWT.Issuer,
+                    MobilePhone = user.Mobile,
+                    Email = user.Email,
                     Roles = this.GetRoles(userId),
                     Modules = this.GetModules(userId),
                     Apis = this.GetApis(userId)
@@ -213,6 +206,26 @@ namespace FewBox.Service.Auth.Controllers
         {
             // Todo: Notification
             return new MetaResponseDto();
+        }
+
+        private UserProfile GetUserProfile(Guid tenantId, Guid userId)
+        {
+            Tenant tenant = this.TenantRepository.FindOne(tenantId);
+            User user = this.UserRepository.FindOne(userId);
+            var userProfile = new UserProfile
+            {
+                Tenant = tenant.Name,
+                Id = userId.ToString(),
+                Name = user.Name,
+                Key = this.FewBoxConfig.JWT.Key,
+                Issuer = this.FewBoxConfig.JWT.Issuer,
+                MobilePhone = user.Mobile,
+                Email = user.Email,
+                Roles = this.GetRoles(userId),
+                Modules = this.GetModules(userId),
+                Apis = this.GetApis(userId)
+            };
+            return userProfile;
         }
 
         private IList<string> GetRoles(Guid userId)
