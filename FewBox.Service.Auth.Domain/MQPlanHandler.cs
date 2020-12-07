@@ -6,6 +6,7 @@ using FewBox.SDK.Core;
 using FewBox.SDK.Mail;
 using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace FewBox.Service.Auth.Domain

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using FewBox.Core.Web.Extension;
 using NSwag;
 using NSwag.Generation.AspNetCore;
@@ -16,7 +15,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using FewBox.SDK.Extension;
 using FewBox.SDK.Auth;
-using FewBox.SDK.Mail;
 
 namespace FewBox.Service.Auth
 {
