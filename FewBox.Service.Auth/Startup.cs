@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using FewBox.SDK.Extension;
 using FewBox.SDK.Auth;
+using System.Reflection;
 
 namespace FewBox.Service.Auth
 {
@@ -68,7 +69,7 @@ namespace FewBox.Service.Auth
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseFewBox(new List<string>{"/swagger/v1/swagger.json","/swagger/v2/swagger.json"} );
+            app.UseFewBox(new List<string> { "/swagger/v1/swagger.json", "/swagger/v2/swagger.json" });
         }
 
         private void InitAspNetCoreOpenApiDocumentGeneratorSettings(AspNetCoreOpenApiDocumentGeneratorSettings config, string documentName, string[] apiGroupNames, string documentVersion)
@@ -107,6 +108,10 @@ namespace FewBox.Service.Auth
             {
                 Name = "Use under license",
                 Url = "https://fewbox.com/license"
+            };
+            string service = Assembly.GetEntryAssembly().GetName().Name;
+            document.Info.ExtensionData = new Dictionary<string, object> {
+                {"Service", service}
             };
         }
     }

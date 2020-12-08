@@ -47,7 +47,7 @@ namespace FewBox.Service.Auth.Domain
                     user.TenantId = tenant.Id;
                     string password = this.GenerateRandomPassword();
                     Guid userId = this.UserRepository.SaveWithMD5Password(user, password);
-                    this.MailService.SendOpsNotification("", $"Wellcome to join us, your password is: {password}", new List<string> { planMessage.Customer.Email });
+                    this.MailService.SendOpsNotification("Getting Start", $"Wellcome to join us, your password is: {password}", new List<string> { planMessage.Customer.Email });
                 }
                 Role proRole = this.RoleRepository.FindOneByCode($"{planMessage.Product.Name.ToUpper()}PRO");
                 Guid proRoleId;

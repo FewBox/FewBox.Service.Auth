@@ -95,6 +95,78 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
+        [HttpPost("initsolutionadmin")]
+        [Transaction]
+        public MetaResponseDto InitSolutionAdmin([FromBody] InitSolutionAdminDto initSolutionAdminDto)
+        {
+            foreach (string swaggerUrl in initSolutionAdminDto.SwaggerUrls)
+            {
+                dynamic swagger = RestfulUtility.Get<dynamic>(swaggerUrl, new List<Header> { });
+                string serviceName = swagger.info.Service;
+                var service = this.ServiceRepository.FindOneByName(serviceName);
+                Guid serviceId;
+                if (service == null)
+                {
+                    service = new S.Service { Name = serviceName };
+                    serviceId = this.ServiceRepository.Save(service);
+                }
+                else
+                {
+                    serviceId = service.Id;
+                }
+                foreach (var path in swagger.paths)
+                {
+                    var operationId = swagger.paths[path.Name].get.operationId;
+                    string[] controllerAndAction = operationId.Value.Splite('_');
+                    string controller = controllerAndAction[0];
+                    string action = controllerAndAction[1];
+                    Api api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceId, controller, action);
+                    Guid apiId;
+                    if (api == null)
+                    {
+                        var securityObject = new SecurityObject { ServiceId = serviceId, Name = $"{operationId.Value}" };
+                        this.SecurityObjectRepository.Save(securityObject);
+                        api = new Api { Controller = controller, Action = action };
+                        apiId = this.ApiRepository.Save(api);
+                    }
+                    else
+                    {
+                        apiId = api.Id;
+                    }
+                    string roleCode = $"{serviceName.ToUpper()}ADMIN";
+                    Role role = this.RoleRepository.FindOneByCode(roleCode);
+                    Guid roleId;
+                    if (role == null)
+                    {
+                        role = new Role { Name = $"{serviceName}Admin", Code = roleCode };
+                        roleId = this.RoleRepository.Save(role);
+                    }
+                    else
+                    {
+                        roleId = role.Id;
+                    }
+                    Role_SecurityObject role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(role.Id, api.SecurityObjectId);
+                    if (role_SecurityObject == null)
+                    {
+                        role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
+                        this.Role_SecurityObjectRepository.Save(role_SecurityObject);
+                    }
+                    else
+                    {
+                        // Do Nothing.
+                    }
+                    /*User user = this.UserRepository.FindOneByEmail(initSolutionAdminDto.Email);
+                    if(user == null)
+                    {
+                        Principal principal = new Principal { Name =  };
+                        user = new User { PrincipalId = }
+                    }*/
+                    // Todo
+                }
+            }
+            return new MetaResponseDto { };
+        }
+
         private string GetRandomPassword(PasswordOptions passwordOptions = null)
         {
             if (passwordOptions == null)
