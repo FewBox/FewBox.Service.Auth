@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FewBox.Core.Utility.Net;
 using System.Text;
+using FewBox.SDK.Mail;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -35,6 +36,7 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IServiceRepository ServiceRepository { get; set; }
         private ITenantRepository TenantRepository { get; set; }
+        private IMailService MailService { get; set; }
         private InitialConfig InitialConfig { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
 
@@ -42,7 +44,7 @@ namespace FewBox.Service.Auth.Controllers
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository,
-            ITenantRepository tenantRepository, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, IMapper mapper) : base(mapper)
+            ITenantRepository tenantRepository, IMailService mailService, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, IMapper mapper) : base(mapper)
         {
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
@@ -56,6 +58,7 @@ namespace FewBox.Service.Auth.Controllers
             this.Principal_RoleRepository = principal_RoleRepository;
             this.ServiceRepository = serviceRepository;
             this.TenantRepository = tenantRepository;
+            this.MailService = mailService;
             this.InitialConfig = initialConfig;
             this.FewBoxConfig = fewBoxConfig;
         }
@@ -103,6 +106,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 dynamic swagger = RestfulUtility.Get<dynamic>(swaggerUrl, new List<Header> { });
                 string serviceName = swagger.info.Service;
+                // Service
                 var service = this.ServiceRepository.FindOneByName(serviceName);
                 Guid serviceId;
                 if (service == null)
@@ -114,54 +118,91 @@ namespace FewBox.Service.Auth.Controllers
                 {
                     serviceId = service.Id;
                 }
+                // Role
+                string roleCode = $"{serviceName.ToUpper()}ADMIN";
+                Role role = this.RoleRepository.FindOneByCode(roleCode);
+                Guid roleId;
+                if (role == null)
+                {
+                    role = new Role { Name = $"{serviceName}Admin", Code = roleCode };
+                    roleId = this.RoleRepository.Save(role);
+                }
+                else
+                {
+                    roleId = role.Id;
+                }
+                // Tenant
+                string tenantName = initSolutionAdminDto.Email.Split('@')[1];
+                Tenant tenant = this.TenantRepository.FindOneByName(tenantName);
+                Guid tenantId;
+                if (tenant == null)
+                {
+                    tenant = new Tenant { Name = tenantName };
+                    tenantId = this.TenantRepository.Save(tenant);
+                }
+                else
+                {
+                    tenantId = tenant.Id;
+                }
+                // User
+                User user = this.UserRepository.FindOneByEmail(initSolutionAdminDto.Email);
+                Guid userId;
+                Guid principalId;
+                if (user == null)
+                {
+                    string password = this.GetRandomPassword();
+                    principalId = this.InitUser(tenantId, $"{initSolutionAdminDto.Solution}-admin", initSolutionAdminDto.Email, password);
+                    this.MailService.SendOpsNotification($"Getting Start", $"Username: {initSolutionAdminDto.Solution}-admin  Password: {password}", new List<string> { initSolutionAdminDto.Email });
+                }
+                else
+                {
+                    userId = user.Id;
+                    principalId = user.PrincipalId;
+                }
+                // Role Binding
+                Principal_Role principal_Role = this.Principal_RoleRepository.FindOneByPrincipalIdAndRoleId(principalId, roleId);
+                if (principal_Role == null)
+                {
+                    principal_Role = new Principal_Role { PrincipalId = principalId, RoleId = roleId };
+                    this.Principal_RoleRepository.Save(principal_Role);
+                }
+                else
+                {
+                    // Do Noting.
+                }
+                // API
                 foreach (var path in swagger.paths)
                 {
-                    var operationId = swagger.paths[path.Name].get.operationId;
-                    string[] controllerAndAction = operationId.Value.Splite('_');
-                    string controller = controllerAndAction[0];
-                    string action = controllerAndAction[1];
-                    Api api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceId, controller, action);
-                    Guid apiId;
-                    if (api == null)
+                    foreach (var verb in swagger.paths[path.Name])
                     {
-                        var securityObject = new SecurityObject { ServiceId = serviceId, Name = $"{operationId.Value}" };
-                        this.SecurityObjectRepository.Save(securityObject);
-                        api = new Api { Controller = controller, Action = action };
-                        apiId = this.ApiRepository.Save(api);
+                        string operationIdValue = verb.Value.operationId.Value;
+                        string[] controllerAndAction = operationIdValue.Split('_');
+                        string controller = controllerAndAction[0];
+                        string action = controllerAndAction[1];
+                        Api api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceId, controller, action);
+                        Guid apiId;
+                        if (api == null)
+                        {
+                            var securityObject = new SecurityObject { ServiceId = serviceId, Name = $"{operationIdValue}" };
+                            Guid securityObjectId = this.SecurityObjectRepository.Save(securityObject);
+                            api = new Api { Controller = controller, Action = action, SecurityObjectId = securityObjectId };
+                            apiId = this.ApiRepository.Save(api);
+                        }
+                        else
+                        {
+                            apiId = api.Id;
+                        }
+                        Role_SecurityObject role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(role.Id, api.SecurityObjectId);
+                        if (role_SecurityObject == null)
+                        {
+                            role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
+                            this.Role_SecurityObjectRepository.Save(role_SecurityObject);
+                        }
+                        else
+                        {
+                            // Do Nothing.
+                        }
                     }
-                    else
-                    {
-                        apiId = api.Id;
-                    }
-                    string roleCode = $"{serviceName.ToUpper()}ADMIN";
-                    Role role = this.RoleRepository.FindOneByCode(roleCode);
-                    Guid roleId;
-                    if (role == null)
-                    {
-                        role = new Role { Name = $"{serviceName}Admin", Code = roleCode };
-                        roleId = this.RoleRepository.Save(role);
-                    }
-                    else
-                    {
-                        roleId = role.Id;
-                    }
-                    Role_SecurityObject role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(role.Id, api.SecurityObjectId);
-                    if (role_SecurityObject == null)
-                    {
-                        role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
-                        this.Role_SecurityObjectRepository.Save(role_SecurityObject);
-                    }
-                    else
-                    {
-                        // Do Nothing.
-                    }
-                    /*User user = this.UserRepository.FindOneByEmail(initSolutionAdminDto.Email);
-                    if(user == null)
-                    {
-                        Principal principal = new Principal { Name =  };
-                        user = new User { PrincipalId = }
-                    }*/
-                    // Todo
                 }
             }
             return new MetaResponseDto { };
@@ -253,7 +294,7 @@ namespace FewBox.Service.Auth.Controllers
                     {
                         // 3. Principal
                         string password = this.GetRandomPassword();
-                        Guid principalId = this.InitUser(tenantId, user.Name, password);
+                        Guid principalId = this.InitUser(tenantId, user.Name, user.Email, password);
                         userIdPair.Add(user.Name, principalId);
                         passwords.Add(user.Name, password);
                     }
@@ -320,13 +361,13 @@ namespace FewBox.Service.Auth.Controllers
             return passwords;
         }
 
-        private Guid InitUser(Guid tenantId, string name, string password)
+        private Guid InitUser(Guid tenantId, string name, string email, string password)
         {
             bool isExist;
-            return this.InitUser(tenantId, name, password, out isExist);
+            return this.InitUser(tenantId, name, password, email, out isExist);
         }
 
-        private Guid InitUser(Guid tenantId, string name, string password, out bool isExist)
+        private Guid InitUser(Guid tenantId, string name, string password, string email, out bool isExist)
         {
             Guid principalId;
             if (this.PrincipalRepository.IsExist(name))
@@ -338,7 +379,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 isExist = false;
                 principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
-                Guid userId = this.UserRepository.SaveWithMD5Password(new User { Type = UserType.Form, PrincipalId = principalId, TenantId = tenantId }, password);
+                Guid userId = this.UserRepository.SaveWithMD5Password(new User { Type = UserType.Form, PrincipalId = principalId, TenantId = tenantId, Email = email }, password);
             }
             return principalId;
         }
@@ -486,7 +527,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 param.AppendLine($"{password.Key} : {password.Value}");
             }
-            // Todo: OpsNotification
+            this.MailService.SendOpsNotification(name, param.ToString(), new List<string> { this.InitialConfig.SystemEmail });
         }
     }
 }
