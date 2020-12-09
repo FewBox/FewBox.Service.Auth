@@ -219,6 +219,7 @@ namespace FewBox.Service.Auth.Controllers
                 Name = user.Name,
                 Key = this.FewBoxConfig.JWT.Key,
                 Issuer = this.FewBoxConfig.JWT.Issuer,
+                Audience = this.FewBoxConfig.JWT.Audience,
                 MobilePhone = user.Mobile,
                 Email = user.Email,
                 Roles = this.GetRoles(userId),
