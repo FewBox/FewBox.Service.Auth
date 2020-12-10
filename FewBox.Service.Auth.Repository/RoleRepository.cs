@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class RoleRepository : Repository<Role>, IRoleRepository
+    public class RoleRepository : CommonRepository<Role>, IRoleRepository
     {
         public bool IsExist(string name)
         {
@@ -55,7 +55,8 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Role> FindAllByUserId(Guid userId)
         {
-            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from principal_role where PrincipalId in (select PrincipalId from user where Id=@UserId))", new { UserId = userId });
+            var principals = this.GetPrincipalIds(userId);
+            return this.UnitOfWork.Connection.Query<Role>($"select * from {this.TableName} where Id in (select RoleId from principal_role where PrincipalId in @Principals)", new { Principals = principals });
         }
 
         public Role FindOneByCode(string code)

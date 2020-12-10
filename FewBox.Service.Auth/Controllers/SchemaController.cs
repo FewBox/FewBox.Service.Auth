@@ -304,7 +304,7 @@ namespace FewBox.Service.Auth.Controllers
                     foreach (GroupConfig group in service.Groups)
                     {
                         // 3. Principal
-                        Guid principalId = this.InitGroup(group.Name);
+                        Guid principalId = this.InitGroup(group.Name, group.ParentName, group.Users);
                         groupIdPair.Add(group.Name, principalId);
                     }
                 }
@@ -387,7 +387,7 @@ namespace FewBox.Service.Auth.Controllers
             return principalId;
         }
 
-        private Guid InitGroup(string name)
+        private Guid InitGroup(string name, string parentName, IList<UserConfig> users)
         {
             Guid principalId;
             if (this.PrincipalRepository.IsExist(name))
@@ -397,7 +397,16 @@ namespace FewBox.Service.Auth.Controllers
             else
             {
                 principalId = this.PrincipalRepository.Save(new Principal { Name = name, PrincipalType = PrincipalType.User });
-                Guid userId = this.GroupRepository.Save(new Group { PrincipalId = principalId, Name = name });
+                var parent = this.GroupRepository.FindOneByName(parentName);
+                Guid groupId = this.GroupRepository.Save(new Group { PrincipalId = principalId, Name = name, ParentId = parent != null ? parent.Id : Guid.Empty });
+                foreach (UserConfig user in users)
+                {
+                    var groupUser = this.UserRepository.FindOneByUsername(user.Name);
+                    if (groupUser != null)
+                    {
+                        this.Group_UserRepository.Save(new Group_User { GroupId = groupId, UserId = groupUser.Id });
+                    }
+                }
             }
             return principalId;
         }

@@ -22,6 +22,13 @@ namespace FewBox.Service.Auth.Repository
                 new { Id = id }).SingleOrDefault();
         }
 
+        public Group FindOneByName(string name)
+        {
+            return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id having principal.Name = @Name",
+                (group, principal) => { group.Name = principal.Name; group.Description = principal.Description; return group; },
+                new { Name = name }).SingleOrDefault();
+        }
+
         public new IEnumerable<Group> FindAll()
         {
             return this.UnitOfWork.Connection.Query<Group, Principal, Group>($"select * from {this.TableName} left join principal on {this.TableName}.PrincipalId = principal.Id",

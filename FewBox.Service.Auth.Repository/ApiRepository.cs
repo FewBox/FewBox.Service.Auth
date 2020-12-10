@@ -3,11 +3,12 @@ using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Persistence.Orm;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class ApiRepository : Repository<Api>, IApiRepository
+    public class ApiRepository : CommonRepository<Api>, IApiRepository
     {
         public ApiRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("api", ormSession, currentUser)
@@ -21,12 +22,13 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Api> FindAllByUserId(Guid userId)
         {
+            var principalIds = this.GetPrincipalIds(userId);
             return this.UnitOfWork.Connection.Query<Api, SecurityObject, Api>(
                 $@"select * from {this.TableName} left join securityobject on {this.TableName}.SecurityObjectId = securityobject.Id where SecurityObjectId in
                 (select SecurityObjectId from role_security where RoleId in
-                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))",
+                (select RoleId from principal_role where PrincipalId in @PrincipalIds))",
                 (api, secuirtyObject) => { api.ServiceId = secuirtyObject.ServiceId; return api; },
-                new { UserId = userId });
+                new { PrincipalIds = principalIds });
         }
 
         public Api FindOneByServiceAndControllerAndAction(Guid serviceId, string controller, string action)

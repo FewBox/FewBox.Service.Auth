@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace FewBox.Service.Auth.Repository
 {
-    public class ModuleRepository : Repository<Module>, IModuleRepository
+    public class ModuleRepository : CommonRepository<Module>, IModuleRepository
     {
         public ModuleRepository(IOrmSession ormSession, ICurrentUser<Guid> currentUser)
         : base("module", ormSession, currentUser)
@@ -67,12 +67,13 @@ namespace FewBox.Service.Auth.Repository
 
         public IEnumerable<Module> FindAllByUserId(Guid userId)
         {
+            var principals = this.GetPrincipalIds(userId);
             return this.UnitOfWork.Connection.Query<Module, SecurityObject, Module>(
                 $@"select * from {this.TableName} left join securityobject on {this.TableName}.SecurityObjectId = securityobject.Id where SecurityObjectId in
                 (select SecurityObjectId from role_security where RoleId in
-                (select RoleId from principal_role where PrincipalId = (select PrincipalId from `user` where id=@UserId)))",
+                (select RoleId from principal_role where PrincipalId in @Principals))",
                 (module, secuirtyObject) => { module.ServiceId = secuirtyObject.ServiceId; return module; },
-                new { UserId = userId });
+                new { Principals = principals });
         }
 
         public bool IsExist(Guid serviceId, string code)
