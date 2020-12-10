@@ -119,12 +119,12 @@ namespace FewBox.Service.Auth.Controllers
                     serviceId = service.Id;
                 }
                 // Role
-                string roleCode = $"{serviceName.ToUpper()}ADMIN";
+                string roleCode = $"{serviceName.ToUpper()}-ADMIN";
                 Role role = this.RoleRepository.FindOneByCode(roleCode);
                 Guid roleId;
                 if (role == null)
                 {
-                    role = new Role { Name = $"{serviceName}Admin", Code = roleCode };
+                    role = new Role { Name = $"{serviceName}-Admin", Code = roleCode };
                     roleId = this.RoleRepository.Save(role);
                 }
                 else
@@ -352,7 +352,10 @@ namespace FewBox.Service.Auth.Controllers
                     // 6. Bind Moudle and Role
                     foreach (ModuleConfig module in service.Modules)
                     {
-                        this.InitModuleAndGrantPermission(module.Name, module.Code, module.ParentName, serviceId, roleIdPair[module.Role]);
+                        foreach (string roleName in module.DefaultRoles)
+                        {
+                            this.InitModuleAndGrantPermission(module.Name, module.Code, module.ParentName, serviceId, roleIdPair[roleName]);
+                        }
                     }
                 }
                 this.SendPassword(passwords);
