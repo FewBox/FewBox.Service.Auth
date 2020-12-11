@@ -13,6 +13,8 @@ using FewBox.Service.Auth.Model.Repositories;
 using Google.Apis.Auth;
 using System.Threading.Tasks;
 using FewBox.Service.Auth.Model.Entities;
+using FewBox.Core.Utility.Compress;
+using FewBox.Core.Utility.Formatter;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -103,8 +105,8 @@ namespace FewBox.Service.Auth.Controllers
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Audience = this.FewBoxConfig.JWT.Audience,
                     Roles = this.GetRoles(userId),
-                    Modules = this.GetModules(userId),
-                    Apis = this.GetApis(userId)
+                    GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId))),
+                    GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId)))
                 };
                 string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
@@ -137,8 +139,8 @@ namespace FewBox.Service.Auth.Controllers
                     MobilePhone = user.Mobile,
                     Email = user.Email,
                     Roles = this.GetRoles(userId),
-                    Modules = this.GetModules(userId),
-                    Apis = this.GetApis(userId)
+                    GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId))),
+                    GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId)))
                 };
                 string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<CheckinResponseDto>
@@ -223,8 +225,8 @@ namespace FewBox.Service.Auth.Controllers
                 MobilePhone = user.Mobile,
                 Email = user.Email,
                 Roles = this.GetRoles(userId),
-                Modules = this.GetModules(userId),
-                Apis = this.GetApis(userId)
+                GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId))),
+                GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId)))
             };
             return userProfile;
         }

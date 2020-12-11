@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
+using FewBox.Core.Utility.Compress;
+using FewBox.Core.Utility.Formatter;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Token;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +39,7 @@ namespace FewBox.Service.Auth.Controllers
                 Key = jwtKey,
                 Issuer = jwtIssuer,
                 Audience = audience,
-                Apis = apis.Select(api => $"{service}/{api}").ToList(),
+                GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(apis.Select(api => $"{service}/{api}").ToList())),
                 Roles = new List<string> { "Admin" }
             };
             string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(timeSpan.Value));
