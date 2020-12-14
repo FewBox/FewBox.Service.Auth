@@ -82,6 +82,7 @@ namespace FewBox.Service.Auth.Controllers
             if (validPayload != null)
             {
                 Guid userId;
+                IDictionary<Guid, string> serviceDictionary = new Dictionary<Guid, string>();
                 if (this.UserRepository.IsGoogleAccountExists(validPayload.Subject))
                 {
                     var user = this.UserRepository.FindOneByUserGoogleId(validPayload.Subject);
@@ -105,8 +106,8 @@ namespace FewBox.Service.Auth.Controllers
                     Issuer = this.FewBoxConfig.JWT.Issuer,
                     Audience = this.FewBoxConfig.JWT.Audience,
                     Roles = this.GetRoles(userId),
-                    GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId))),
-                    GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId)))
+                    Apis = this.GetApis(userId, serviceDictionary),
+                    Modules = this.GetModules(userId, serviceDictionary)
                 };
                 string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<SigninResponseDto>
@@ -129,6 +130,7 @@ namespace FewBox.Service.Auth.Controllers
             {
                 Tenant tenant = this.TenantRepository.FindOne(tenantId);
                 User user = this.UserRepository.FindOne(userId);
+                IDictionary<Guid, string> serviceDictionary = new Dictionary<Guid, string>();
                 var userProfile = new UserProfile
                 {
                     Tenant = tenant.Name,
@@ -139,8 +141,8 @@ namespace FewBox.Service.Auth.Controllers
                     MobilePhone = user.Mobile,
                     Email = user.Email,
                     Roles = this.GetRoles(userId),
-                    GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId))),
-                    GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId)))
+                    Modules = this.GetModules(userId, serviceDictionary),
+                    Apis = this.GetApis(userId, serviceDictionary)
                 };
                 string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(this.AuthConfig.ExpireTime));
                 return new PayloadResponseDto<CheckinResponseDto>
@@ -214,6 +216,7 @@ namespace FewBox.Service.Auth.Controllers
         {
             Tenant tenant = this.TenantRepository.FindOne(tenantId);
             User user = this.UserRepository.FindOne(userId);
+            IDictionary<Guid, string> serviceDictionary = new Dictionary<Guid, string>();
             var userProfile = new UserProfile
             {
                 Tenant = tenant.Name,
@@ -225,8 +228,8 @@ namespace FewBox.Service.Auth.Controllers
                 MobilePhone = user.Mobile,
                 Email = user.Email,
                 Roles = this.GetRoles(userId),
-                GzipModules = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetModules(userId))),
-                GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(this.GetApis(userId)))
+                Modules = this.GetModules(userId, serviceDictionary),
+                Apis = this.GetApis(userId, serviceDictionary)
             };
             return userProfile;
         }
@@ -236,14 +239,31 @@ namespace FewBox.Service.Auth.Controllers
             return this.RoleRepository.FindAllByUserId(userId).Select(role => role.Code).ToList();
         }
 
-        private IList<string> GetApis(Guid userId)
+        private IList<string> GetApis(Guid userId, IDictionary<Guid, string> serviceDictionary)
         {
-            return this.ApiRepository.FindAllByUserId(userId).Select(api => $"{this.ServiceRepository.FindOne(api.ServiceId).Name}/{api.Controller}/{api.Action}").ToList();
+            var apis = this.ApiRepository.FindAllByUserId(userId);
+            return apis.Select(api => $"{this.GetServiceName(api.ServiceId, serviceDictionary)}/{api.Controller}/{api.Action}").ToList();
         }
 
-        private IList<string> GetModules(Guid userId)
+        private IList<string> GetModules(Guid userId, IDictionary<Guid, string> serviceDictionary)
         {
-            return this.ModuleRepository.FindAllByUserId(userId).Select(module => $"{this.ServiceRepository.FindOne(module.ServiceId).Name}/{module.Code}").ToList();
+            var modules = this.ModuleRepository.FindAllByUserId(userId);
+            return modules.Select(module => $"{this.GetServiceName(module.ServiceId, serviceDictionary)}/{module.Code}").ToList();
+        }
+
+        private string GetServiceName(Guid serviceId, IDictionary<Guid, string> serviceDictionary)
+        {
+            string serviceName;
+            if (serviceDictionary.ContainsKey(serviceId))
+            {
+                serviceName = serviceDictionary[serviceId];
+            }
+            else
+            {
+                serviceName = this.ServiceRepository.FindOne(serviceId).Name;
+                serviceDictionary.Add(serviceId, serviceName);
+            }
+            return serviceName;
         }
     }
 }

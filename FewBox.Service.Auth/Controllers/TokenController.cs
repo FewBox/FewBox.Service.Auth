@@ -39,7 +39,7 @@ namespace FewBox.Service.Auth.Controllers
                 Key = jwtKey,
                 Issuer = jwtIssuer,
                 Audience = audience,
-                GzipApis = GzipUtility.Zip(JsonUtility.Serialize<IList<string>>(apis.Select(api => $"{service}/{api}").ToList())),
+                Apis = apis.Select(api => $"{service}/{api}").ToList(),
                 Roles = new List<string> { "Admin" }
             };
             string token = this.TokenService.GenerateToken(userProfile, DateTime.Now.Add(timeSpan.Value));
