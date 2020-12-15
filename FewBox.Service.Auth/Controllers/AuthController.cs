@@ -212,6 +212,14 @@ namespace FewBox.Service.Auth.Controllers
             return new MetaResponseDto();
         }
 
+        [HttpPost("parsetoken")]
+        public PayloadResponseDto<UserProfile> ParseToken([FromBody] TokenDto tokenDto)
+        {
+            return new PayloadResponseDto<UserProfile>
+            {
+                Payload = this.TokenService.GetUserProfileByToken(tokenDto.Value)
+            };
+        }
         private UserProfile GetUserProfile(Guid tenantId, Guid userId)
         {
             Tenant tenant = this.TenantRepository.FindOne(tenantId);
