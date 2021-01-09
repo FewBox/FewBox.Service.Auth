@@ -17,6 +17,7 @@ using System.Linq;
 using FewBox.Core.Utility.Net;
 using System.Text;
 using FewBox.SDK.Mail;
+using Microsoft.Extensions.Logging;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -39,12 +40,13 @@ namespace FewBox.Service.Auth.Controllers
         private IMailService MailService { get; set; }
         private InitialConfig InitialConfig { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
+        private ILogger Logger { get; set; }
 
         public SchemaController(IUserRepository userRepository, IGroupRepository groupRepository, IRoleRepository roleRepository,
             IApiRepository apiRepository, IModuleRepository moduleRepository, IGroup_UserRepository group_UserRepository,
             IPrincipalRepository principalRepository, ISecurityObjectRepository securityObjectRepository,
             IRole_SecurityObjectRepository role_SecurityObjectRepository, IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository,
-            ITenantRepository tenantRepository, IMailService mailService, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, IMapper mapper) : base(mapper)
+            ITenantRepository tenantRepository, IMailService mailService, InitialConfig initialConfig, FewBoxConfig fewBoxConfig, ILogger<SchemaController> logger, IMapper mapper) : base(mapper)
         {
             this.PrincipalRepository = principalRepository;
             this.UserRepository = userRepository;
@@ -61,6 +63,7 @@ namespace FewBox.Service.Auth.Controllers
             this.MailService = mailService;
             this.InitialConfig = initialConfig;
             this.FewBoxConfig = fewBoxConfig;
+            this.Logger = logger;
         }
 
         [AllowAnonymous]
@@ -531,6 +534,7 @@ namespace FewBox.Service.Auth.Controllers
         {
             if (userPasswordPair == null || userPasswordPair.Count == 0)
             {
+                this.Logger.LogError($"No user password pair.");
                 return;
             }
             string name = "Initial Password";
@@ -540,6 +544,7 @@ namespace FewBox.Service.Auth.Controllers
                 param.AppendLine($"{password.Key} : {password.Value}");
             }
             this.MailService.SendOpsNotification(name, param.ToString(), new List<string> { this.InitialConfig.SystemEmail });
+            this.Logger.LogInformation($"Send password to {this.InitialConfig.SystemEmail}.");
         }
     }
 }
