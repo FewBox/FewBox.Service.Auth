@@ -84,9 +84,12 @@ namespace FewBox.Service.Auth.Controllers
                 return new PayloadResponseDto<IDictionary<string, string>> { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
             }
             #endregion
+            this.Logger.LogInformation($"-----------Begin Init-----------");
+            var passwordPairs = this.Init(this.InitialConfig.Services);
+            this.Logger.LogInformation($"-----------End Init-----------");
             return new PayloadResponseDto<IDictionary<string, string>>
             {
-                Payload = this.Init(this.InitialConfig.Services)
+                Payload = passwordPairs
             };
         }
 
@@ -263,7 +266,6 @@ namespace FewBox.Service.Auth.Controllers
 
         private IDictionary<string, string> Init(IList<ServiceConfig> services)
         {
-            this.Logger.LogDebug($"-----------Begin Init-----------");
             Guid tenantId;
             if (this.TenantRepository.IsExist(this.InitialConfig.Tenant))
             {
@@ -282,14 +284,14 @@ namespace FewBox.Service.Auth.Controllers
                 IDictionary<string, Guid> userIdPair = new Dictionary<string, Guid>();
                 IDictionary<string, Guid> groupIdPair = new Dictionary<string, Guid>();
                 // 1. Service
-                this.Logger.LogDebug($"-----------Init Service ({service.Name})-----------");
+                this.Logger.LogInformation($"-----------Init Service ({service.Name})-----------");
                 Guid serviceId = this.InitService(service.Name, service.Description);
                 if (service.Roles != null)
                 {
                     foreach (RoleConfig role in service.Roles)
                     {
                         // 2. Role
-                        this.Logger.LogDebug($"-----------Init Role ({role.Name})-----------");
+                        this.Logger.LogInformation($"-----------Init Role ({role.Name})-----------");
                         Guid roleId = this.InitRole(role.Name, role.Code);
                         roleIdPair.Add(role.Name, roleId);
                     }
@@ -299,7 +301,7 @@ namespace FewBox.Service.Auth.Controllers
                     foreach (UserConfig user in service.Users)
                     {
                         // 3. Principal (User)
-                        this.Logger.LogDebug($"-----------Init User ({user.Name})-----------");
+                        this.Logger.LogInformation($"-----------Init User ({user.Name})-----------");
                         string password = this.GetRandomPassword();
                         Guid principalId = this.InitUser(tenantId, user.Name, user.Email, password);
                         userIdPair.Add(user.Name, principalId);
@@ -311,7 +313,7 @@ namespace FewBox.Service.Auth.Controllers
                     foreach (GroupConfig group in service.Groups)
                     {
                         // 3. Principal (Group)
-                        this.Logger.LogDebug($"-----------Init Group ({group.Name})-----------");
+                        this.Logger.LogInformation($"-----------Init Group ({group.Name})-----------");
                         Guid principalId = this.InitGroup(group.Name, group.ParentName, group.Users);
                         groupIdPair.Add(group.Name, principalId);
                     }
@@ -321,7 +323,7 @@ namespace FewBox.Service.Auth.Controllers
                     foreach (RoleAssignmentConfig roleAssignment in service.RoleAssignments)
                     {
                         // 4. Bind Principal & Role
-                        this.Logger.LogDebug($"-----------Init Princiapl & Role ({roleAssignment.Principal} [{roleAssignment.PrincipalType.ToString()}] : {roleAssignment.Role})-----------");
+                        this.Logger.LogInformation($"-----------Init Princiapl & Role ({roleAssignment.Principal} [{roleAssignment.PrincipalType.ToString()}] : {roleAssignment.Role})-----------");
                         if (roleAssignment.PrincipalType == PrincipalTypeConfig.Group)
                         {
                             this.GrantRole(groupIdPair[roleAssignment.Principal], roleIdPair[roleAssignment.Role]);
@@ -335,7 +337,7 @@ namespace FewBox.Service.Auth.Controllers
                 if (service.Apis != null)
                 {
                     // 5. Bind Api & Role
-                    this.Logger.LogDebug($"-----------Init Api & Role Binding-----------");
+                    this.Logger.LogInformation($"-----------Init Api & Role Binding-----------");
                     foreach (ApiConfig api in service.Apis)
                     {
                         foreach (ActionConfig action in api.Actions)
@@ -360,7 +362,7 @@ namespace FewBox.Service.Auth.Controllers
                 if (service.Modules != null)
                 {
                     // 6. Bind Moudle and Role
-                    this.Logger.LogDebug($"-----------Init Module & Role Binding-----------");
+                    this.Logger.LogInformation($"-----------Init Module & Role Binding-----------");
                     foreach (ModuleConfig module in service.Modules)
                     {
                         foreach (string roleName in module.DefaultRoles)
@@ -545,7 +547,7 @@ namespace FewBox.Service.Auth.Controllers
                 this.Logger.LogError($"No user password pair.");
                 return;
             }
-            this.Logger.LogDebug($"-----------Send password-----------");
+            this.Logger.LogInformation($"-----------Send password-----------");
             string name = "Initial Password";
             StringBuilder param = new StringBuilder();
             foreach (var password in userPasswordPair)
