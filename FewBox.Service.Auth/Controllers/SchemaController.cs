@@ -78,13 +78,14 @@ namespace FewBox.Service.Auth.Controllers
         [Transaction]
         public PayloadResponseDto<IDictionary<string, string>> Init()
         {
+            this.Logger.LogInformation($"-----------Begin Init-----------");
             # region Validate Inited.
             if (this.UserRepository.Count() > 0)
             {
+                this.Logger.LogError($"The app has been init, please sign in.");
                 return new PayloadResponseDto<IDictionary<string, string>> { IsSuccessful = false, ErrorCode = "APP_INIT", ErrorMessage = "The app has been init, please sign in." };
             }
             #endregion
-            this.Logger.LogInformation($"-----------Begin Init-----------");
             var passwordPairs = this.Init(this.InitialConfig.Services);
             this.Logger.LogInformation($"-----------End Init-----------");
             return new PayloadResponseDto<IDictionary<string, string>>
