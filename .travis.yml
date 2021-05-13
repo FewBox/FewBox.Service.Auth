@@ -2,7 +2,7 @@ language: csharp
 mono: none
 sudo: required
 dist: xenial
-dotnet: 3.1
+dotnet: 5.0
 env:
   # Docker slug
   - DOCKER_REPO_SLUG=fewbox/auth PROJECTNAME=FewBox.Service.Auth PROJECTUNITTESTNAME=$PROJECTNAME.UnitTest
@@ -10,7 +10,7 @@ install:
   - dotnet restore $PROJECTNAME
 script:
   - dotnet publish -c Release $PROJECTNAME/$PROJECTNAME.csproj
-  - cd $TRAVIS_BUILD_DIR/$PROJECTNAME/bin/Release/netcoreapp3.1/publish
+  - cd $TRAVIS_BUILD_DIR/$PROJECTNAME/bin/Release/netcoreapp5.0/publish
   - cp $TRAVIS_BUILD_DIR/Dockerfile ./
   - cp $TRAVIS_BUILD_DIR/.dockerignore ./
   # build latest image always
