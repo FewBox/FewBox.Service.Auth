@@ -8,6 +8,9 @@ dotnet publish -c Release $PROJECTNAME/$PROJECTNAME.csproj -p:FileVersion=$TRAVI
 cp Dockerfile ./$PROJECTNAME/bin/Release/netcoreapp5.0/publish/Dockerfile
 cp .dockerignore ./$PROJECTNAME/bin/Release/netcoreapp5.0/publish/.dockerignore
 cd $PROJECTNAME/bin/Release/netcoreapp5.0/publish
+echo '*** docker folder ***'
+pwd
+echo '*** docker files ***'
 docker build -t $DOCKER_REPO_IP:$DOCKER_REPO_PORT/$DOCKER_REPO_SLUG:$DOCKER_REPO_VERSION .
 docker push $DOCKER_REPO_IP:$DOCKER_REPO_PORT/$DOCKER_REPO_SLUG:$DOCKER_REPO_VERSION
 cd ../../../../../
