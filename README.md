@@ -31,6 +31,19 @@ https://NAS_IP:6088/v2/{repname}/tags/list
 # MySQL
 https://NAS_IP:49154
 
+主机	Container	通讯协议	
+49174 3306 TCP
+49173 33060 TCP
+
 # RibbitMQ
 https://NAS_IP:49154 Web 15672
 https://NAS_IP:49156 Client 5672
+
+主机	Container	通讯协议	
+49155 15671 TCP
+49154 15672 TCP
+49153 25672 TCP
+49158 4369 TCP
+49157 5671 TCP
+49156 5672 TCP
+
