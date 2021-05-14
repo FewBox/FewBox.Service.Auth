@@ -32,5 +32,5 @@ https://NAS_IP:6088/v2/{repname}/tags/list
 https://NAS_IP:49154
 
 # RibbitMQ
-https://NAS_IP:49156 Web
-https://NAS_IP:49158 Client
+https://NAS_IP:49154 Web 15672
+https://NAS_IP:49156 Client 5672
