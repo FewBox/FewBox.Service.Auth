@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using FewBox.Core.Web.Token;
 using FewBox.Core.Web.Dto;
 using FewBox.Core.Web.Config;
@@ -13,15 +12,16 @@ using FewBox.Service.Auth.Model.Repositories;
 using Google.Apis.Auth;
 using System.Threading.Tasks;
 using FewBox.Service.Auth.Model.Entities;
-using FewBox.Core.Utility.Compress;
-using FewBox.Core.Utility.Formatter;
+using FewBox.Core.Web.Filter;
+using FewBox.Core.Web.Controller;
+using AutoMapper;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
     [ApiController]
     [Authorize(Policy = "JWTPayload_ControllerAction")]
-    public class AuthController : ControllerBase
+    public class AuthController : MapperController
     {
         private IUserRepository UserRepository { get; set; }
         private IRoleRepository RoleRepository { get; set; }
@@ -32,13 +32,13 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IServiceRepository ServiceRepository { get; set; }
-        private ITokenService TokenService { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
         IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
-        IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository, ITokenService tokenService, FewBoxConfig fewBoxConfig, AuthConfig authConfig)
+        IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository, FewBoxConfig fewBoxConfig,
+        AuthConfig authConfig, ITokenService tokenService, IMapper mapper) : base(mapper, tokenService)
         {
             this.UserRepository = userRepository;
             this.RoleRepository = roleRepository;
@@ -49,7 +49,6 @@ namespace FewBox.Service.Auth.Controllers
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.ServiceRepository = serviceRepository;
-            this.TokenService = tokenService;
             this.FewBoxConfig = fewBoxConfig;
             this.AuthConfig = authConfig;
         }
@@ -220,6 +219,134 @@ namespace FewBox.Service.Auth.Controllers
                 Payload = this.TokenService.GetUserProfileByToken(tokenDto.Value)
             };
         }
+
+        [AllowAnonymous]
+        [HttpPost("userregister")]
+        [Transaction]
+        public PayloadResponseDto<Guid> UserRegister([FromBody] UserRegistryRequestDto userRegistryRequestDto)
+        {
+            // Todo
+            /*if (userRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "VALIDATECODE_ERROR",
+                    ErrorMessage = "Validate code is not match."
+                };
+            }*/
+            if (String.IsNullOrEmpty(userRegistryRequestDto.ProductName))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "PRODUCTNAME_NOT_EXIST",
+                    ErrorMessage = "Product name is not exist."
+                };
+            }
+            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Email)) && this.TenantRepository.IsExist(userRegistryRequestDto.Email))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "TENANT_EXIST",
+                    ErrorMessage = "Tenant is exist."
+                };
+            }
+            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Name)) && this.PrincipalRepository.IsExist(userRegistryRequestDto.Name))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "USER_EXIST",
+                    ErrorMessage = "User is exist."
+                };
+            }
+            Guid roleId;
+            string roleName = $"{userRegistryRequestDto.ProductName}_Free";
+            string roleCode = $"{userRegistryRequestDto.ProductName.ToUpper()}_FREE";
+            if (this.RoleRepository.IsExist(roleName, roleCode))
+            {
+                roleId = this.RoleRepository.FindOneByNameAndCode(roleName, roleCode).Id;
+            }
+            else
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "ROLE_NOTEXIST",
+                    ErrorMessage = "Role is not exist."
+                };
+            }
+            var tenant = new Tenant { Name = userRegistryRequestDto.Email };
+            Guid tenantId = this.TenantRepository.Save(tenant);
+            var principal = this.Mapper.Map<UserRegistryRequestDto, Principal>(userRegistryRequestDto);
+            principal.PrincipalType = PrincipalType.User;
+            Guid principalId = this.PrincipalRepository.Save(principal);
+            var user = this.Mapper.Map<UserRegistryRequestDto, User>(userRegistryRequestDto);
+            user.Type = UserType.Form;
+            user.PrincipalId = principalId;
+            user.TenantId = tenantId;
+            Guid userId = this.UserRepository.SaveWithMD5Password(user, userRegistryRequestDto.Password);
+            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            return new PayloadResponseDto<Guid>
+            {
+                Payload = userId
+            };
+        }
+
+        [HttpPost("appregister")]
+        [Transaction]
+        public PayloadResponseDto<Guid> AppRegister([FromBody] AppRegistryRequestDto appRegistryRequestDto)
+        {
+            // Todo
+            /*if (appRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "VALIDATECODE_ERROR",
+                    ErrorMessage = "Validate code is not match."
+                };
+            }
+            if (this.PrincipalRepository.IsExist(appRegistryRequestDto.Name))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "APPNAME_EXIST",
+                    ErrorMessage = "APP name is exist."
+                };
+            }
+            if (!this.TenantRepository.IsExist(appRegistryRequestDto.TenantId))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "TENANT_DOESNOTEXIST",
+                    ErrorMessage = "Tenant not exist."
+                };
+            }
+            Tenant tenant = this.TenantRepository.FindOne(appRegistryRequestDto.TenantId);
+            var principal = this.Mapper.Map<AppRegistryRequestDto, Principal>(appRegistryRequestDto);
+            principal.PrincipalType = PrincipalType.User;
+            Guid principalId = this.PrincipalRepository.Save(principal);
+            var user = new User { 
+                PrincipalId = principalId,
+                TenantId = appRegistryRequestDto.TenantId,
+            };
+            user.PrincipalId = principalId;
+            user.TenantId = appRegistryRequestDto.TenantId;
+            Guid userId = this.UserRepository.SaveWithMD5Password(user, appRegistryRequestDto.Password);
+            var role = new Role { Name = $"Tenant Admin ({appRegistryRequestDto.Tenant})", Code = $"{tenant.ToUpper()}_ADMIN", Description = "The admin of tenant." };
+            Guid roleId = this.RoleRepository.Save(role);
+            this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });*/
+            return new PayloadResponseDto<Guid>
+            {
+                //Payload = userId
+            };
+        }
+
         private UserProfile GetUserProfile(Guid tenantId, Guid userId)
         {
             Tenant tenant = this.TenantRepository.FindOne(tenantId);

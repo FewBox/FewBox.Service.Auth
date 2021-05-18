@@ -105,61 +105,32 @@ namespace FewBox.Service.Auth.Controllers
             };
         }
 
-        [HttpPost("initsolutionadmin")]
+        [HttpPost("initproductadmin")]
         [Transaction]
-        public MetaResponseDto InitSolutionAdmin([FromBody] InitSolutionAdminDto initSolutionAdminDto)
+        public MetaResponseDto InitProductAdmin([FromBody] InitProductAdminDto initProductAdminDto)
         {
-            foreach (string swaggerUrl in initSolutionAdminDto.SwaggerUrls)
+            foreach (string swaggerUrl in initProductAdminDto.SwaggerUrls)
             {
                 dynamic swagger = RestfulUtility.Get<dynamic>(swaggerUrl, new List<Header> { });
-                string serviceName = swagger.info.Service;
+                string productName = swagger.info.Service;
                 // Service
-                var service = this.ServiceRepository.FindOneByName(serviceName);
-                Guid serviceId;
-                if (service == null)
-                {
-                    service = new S.Service { Name = serviceName };
-                    serviceId = this.ServiceRepository.Save(service);
-                }
-                else
-                {
-                    serviceId = service.Id;
-                }
+                Guid serviceId = this.InitService(productName, productName);
                 // Role
-                string roleCode = $"{serviceName.ToUpper()}-ADMIN";
-                Role role = this.RoleRepository.FindOneByCode(roleCode);
-                Guid roleId;
-                if (role == null)
-                {
-                    role = new Role { Name = $"{serviceName}-Admin", Code = roleCode };
-                    roleId = this.RoleRepository.Save(role);
-                }
-                else
-                {
-                    roleId = role.Id;
-                }
+                string roleName = $"{productName}_Admin";
+                string roleCode = $"{productName}_ADMIN";
+                Guid roleId = this.InitRole(roleName, roleCode);
                 // Tenant
-                string tenantName = initSolutionAdminDto.Email.Split('@')[1];
-                Tenant tenant = this.TenantRepository.FindOneByName(tenantName);
-                Guid tenantId;
-                if (tenant == null)
-                {
-                    tenant = new Tenant { Name = tenantName };
-                    tenantId = this.TenantRepository.Save(tenant);
-                }
-                else
-                {
-                    tenantId = tenant.Id;
-                }
+                string tenantName = initProductAdminDto.Email.Split('@')[1];
+                Guid tenantId = this.InitTenant(tenantName);
                 // User
-                User user = this.UserRepository.FindOneByEmail(initSolutionAdminDto.Email);
+                User user = this.UserRepository.FindOneByEmail(initProductAdminDto.Email);
                 Guid userId;
                 Guid principalId;
                 if (user == null)
                 {
                     string password = this.GetRandomPassword();
-                    principalId = this.InitUser(tenantId, $"{initSolutionAdminDto.Solution}-admin", initSolutionAdminDto.Email, password);
-                    this.MailService.SendOpsNotification($"Getting Start", $"Username: {initSolutionAdminDto.Solution}-admin  Password: {password}", new List<string> { initSolutionAdminDto.Email });
+                    principalId = this.InitUser(tenantId, $"{initProductAdminDto.Name}", initProductAdminDto.Email, password);
+                    this.MailService.SendOpsNotification($"Getting Start", $"Username: {initProductAdminDto.Name}  Password: {password}", new List<string> { initProductAdminDto.Email });
                 }
                 else
                 {
@@ -186,31 +157,35 @@ namespace FewBox.Service.Auth.Controllers
                         string[] controllerAndAction = operationIdValue.Split('_');
                         string controller = controllerAndAction[0];
                         string action = controllerAndAction[1];
-                        Api api = this.ApiRepository.FindOneByServiceAndControllerAndAction(serviceId, controller, action);
-                        Guid apiId;
-                        if (api == null)
-                        {
-                            var securityObject = new SecurityObject { ServiceId = serviceId, Name = $"{operationIdValue}" };
-                            Guid securityObjectId = this.SecurityObjectRepository.Save(securityObject);
-                            api = new Api { Controller = controller, Action = action, SecurityObjectId = securityObjectId };
-                            apiId = this.ApiRepository.Save(api);
-                        }
-                        else
-                        {
-                            apiId = api.Id;
-                        }
-                        Role_SecurityObject role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(role.Id, api.SecurityObjectId);
-                        if (role_SecurityObject == null)
-                        {
-                            role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = api.SecurityObjectId };
-                            this.Role_SecurityObjectRepository.Save(role_SecurityObject);
-                        }
-                        else
-                        {
-                            // Do Nothing.
-                        }
+                        this.InitApiAndGrantPermission(controller, action, serviceId, roleId);
                     }
                 }
+            }
+            return new MetaResponseDto { };
+        }
+
+        [HttpPost("initproductrole")]
+        [Transaction]
+        public MetaResponseDto InitProductRole([FromBody] InitProductRoleDto initProductRoleDto)
+        {
+
+            // Service
+            Guid serviceId = this.InitService(initProductRoleDto.ProductName, initProductRoleDto.ProductName);
+            // Role
+            string freeRoleName = $"{initProductRoleDto.ProductName}_Free";
+            string freeRoleCode = $"{initProductRoleDto.ProductName}_FREE";
+            string proRoleName = $"{initProductRoleDto.ProductName}_Pro";
+            string proRoleCode = $"{initProductRoleDto.ProductName}_PRO";
+            Guid freeRoleId = this.InitRole(freeRoleName, freeRoleCode);
+            Guid proRoleId = this.InitRole(proRoleName, proRoleCode);
+            // Api
+            foreach (var freeRoleApi in initProductRoleDto.FreeRoleApis)
+            {
+                this.InitApiAndGrantPermission(freeRoleApi.Controller, freeRoleApi.Action, serviceId, freeRoleId);
+            }
+            foreach (var proRoleApi in initProductRoleDto.ProRoleApis)
+            {
+                this.InitApiAndGrantPermission(proRoleApi.Controller, proRoleApi.Action, serviceId, proRoleId);
             }
             return new MetaResponseDto { };
         }
@@ -376,6 +351,22 @@ namespace FewBox.Service.Auth.Controllers
             }
             #endregion
             return passwords;
+        }
+
+        private Guid InitTenant(string name)
+        {
+            Tenant tenant = this.TenantRepository.FindOneByName(name);
+            Guid tenantId;
+            if (tenant == null)
+            {
+                tenant = new Tenant { Name = name };
+                tenantId = this.TenantRepository.Save(tenant);
+            }
+            else
+            {
+                tenantId = tenant.Id;
+            }
+            return tenantId;
         }
 
         private Guid InitUser(Guid tenantId, string name, string email, string password)
