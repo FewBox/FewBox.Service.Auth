@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="9.0.0" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.39" />
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+    <PackageReference Include="FewBox.Core.Persistence" Version="1.0.43" />
     <PackageReference Include="FewBox.Core.Utility" Version="1.0.32" />
     <PackageReference Include="FewBox.SDK" Version="0.0.18" />
     <PackageReference Include="Google.Apis.Auth" Version="1.45.0" />
@@ -19,8 +19,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="5.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="5.0.6" />
-    <PackageReference Include="NSwag.AspNetCore" Version="13.4.2" />
-    <PackageReference Include="Sentry.AspNetCore" Version="2.1.1" />
+    <PackageReference Include="NSwag.AspNetCore" Version="13.11.1" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.3.4" />
   </ItemGroup>
 
   <ItemGroup>

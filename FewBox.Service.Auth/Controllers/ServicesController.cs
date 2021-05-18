@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FewBox.Core.Web.Controller;
+using FewBox.Core.Web.Token;
 using FewBox.Service.Auth.Model.Dtos;
 using FewBox.Service.Auth.Model.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -13,8 +14,8 @@ namespace FewBox.Service.Auth.Controllers
     public class ServicesController : ResourcesController<IServiceRepository, S.Service, ServiceDto, ServicePersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
-        public ServicesController(IServiceRepository serviceRepository, ISecurityObjectRepository securityObjectRepository,
-        IMapper mapper) : base(serviceRepository, mapper)
+        public ServicesController(IServiceRepository serviceRepository, ISecurityObjectRepository securityObjectRepository, ITokenService tokenService,
+        IMapper mapper) : base(serviceRepository, tokenService, mapper)
         {
             this.SecurityObjectRepository = securityObjectRepository;
         }

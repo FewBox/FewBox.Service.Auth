@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using FewBox.Core.Web.Token;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -22,7 +23,7 @@ namespace FewBox.Service.Auth.Controllers
         private IRoleRepository RoleRepository { get; set; }
 
         public ApisController(IApiRepository apiRepository, ISecurityObjectRepository securityObjectRepository, IRole_SecurityObjectRepository role_SecurityObjectRepository,
-        IRoleRepository roleRepository, IMapper mapper) : base(apiRepository, mapper)
+        IRoleRepository roleRepository, ITokenService tokenService, IMapper mapper) : base(apiRepository, tokenService, mapper)
         {
             this.SecurityObjectRepository = securityObjectRepository;
             this.Role_SecurityObjectRepository = role_SecurityObjectRepository;

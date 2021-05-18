@@ -5,6 +5,7 @@ using FewBox.Service.Auth.Model.Repositories;
 using FewBox.Core.Web.Controller;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using FewBox.Core.Web.Token;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -12,7 +13,7 @@ namespace FewBox.Service.Auth.Controllers
     [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class RolesController : ResourcesController<IRoleRepository, Role, RoleDto, RolePersistantDto>
     {
-        public RolesController(IRoleRepository roleRepository, IMapper mapper) : base(roleRepository, mapper)
+        public RolesController(IRoleRepository roleRepository, ITokenService tokenService, IMapper mapper) : base(roleRepository, tokenService, mapper)
         {
         }
     }

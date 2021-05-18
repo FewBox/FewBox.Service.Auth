@@ -7,6 +7,7 @@ using FewBox.Core.Web.Dto;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using FewBox.Core.Web.Token;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -14,7 +15,7 @@ namespace FewBox.Service.Auth.Controllers
     [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class TenantsController : ResourcesController<ITenantRepository, Tenant, TenantDto, TenantPersistantDto>
     {
-        public TenantsController(ITenantRepository tenantRepository, IMapper mapper) : base(tenantRepository, mapper)
+        public TenantsController(ITenantRepository tenantRepository, ITokenService tokenService, IMapper mapper) : base(tenantRepository, tokenService, mapper)
         {
         }
 

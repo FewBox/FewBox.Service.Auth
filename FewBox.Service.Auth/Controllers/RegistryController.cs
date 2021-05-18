@@ -36,7 +36,7 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<Guid> UserRegister([FromBody] UserRegistryRequestDto userRegistryRequestDto)
         {
             // Todo
-            if (userRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")
+            /*if (userRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -44,8 +44,17 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorCode = "VALIDATECODE_ERROR",
                     ErrorMessage = "Validate code is not match."
                 };
+            }*/
+            if (String.IsNullOrEmpty(userRegistryRequestDto.ProductName))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "PRODUCTNAME_NOT_EXIST",
+                    ErrorMessage = "Product name is not exist."
+                };
             }
-            if (this.TenantRepository.IsExist(userRegistryRequestDto.Tenant))
+            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Email)) && this.TenantRepository.IsExist(userRegistryRequestDto.Email))
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -54,7 +63,7 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "Tenant is exist."
                 };
             }
-            if (this.PrincipalRepository.IsExist(userRegistryRequestDto.Name))
+            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Name)) && this.PrincipalRepository.IsExist(userRegistryRequestDto.Name))
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -63,7 +72,23 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "User is exist."
                 };
             }
-            var tenant = new Tenant { Name = userRegistryRequestDto.Tenant };
+            Guid roleId;
+            string roleName = $"{userRegistryRequestDto.ProductName}_Free";
+            string roleCode = $"{userRegistryRequestDto.ProductName.ToUpper()}_FREE";
+            if (this.RoleRepository.IsExist(roleName, roleCode))
+            {
+                roleId = this.RoleRepository.FindOneByNameAndCode(roleName, roleCode).Id;
+            }
+            else
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "ROLE_NOTEXIST",
+                    ErrorMessage = "Role is not exist."
+                };
+            }
+            var tenant = new Tenant { Name = userRegistryRequestDto.Email };
             Guid tenantId = this.TenantRepository.Save(tenant);
             var principal = this.Mapper.Map<UserRegistryRequestDto, Principal>(userRegistryRequestDto);
             principal.PrincipalType = PrincipalType.User;
@@ -73,8 +98,6 @@ namespace FewBox.Service.Auth.Controllers
             user.PrincipalId = principalId;
             user.TenantId = tenantId;
             Guid userId = this.UserRepository.SaveWithMD5Password(user, userRegistryRequestDto.Password);
-            var role = new Role { Name = $"Tenant Admin ({userRegistryRequestDto.Tenant})", Code = $"{userRegistryRequestDto.Tenant.ToUpper()}_ADMIN", Description = "The admin of tenant." };
-            Guid roleId = this.RoleRepository.Save(role);
             this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
             return new PayloadResponseDto<Guid>
             {

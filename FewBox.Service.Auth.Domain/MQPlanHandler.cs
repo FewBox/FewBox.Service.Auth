@@ -6,7 +6,6 @@ using FewBox.SDK.Core;
 using FewBox.SDK.Mail;
 using FewBox.Service.Auth.Model.Entities;
 using FewBox.Service.Auth.Model.Repositories;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace FewBox.Service.Auth.Domain
@@ -35,8 +34,15 @@ namespace FewBox.Service.Auth.Domain
         {
             return (planMessage) =>
             {
+                string freeRoleCode = $"{planMessage.Product.Name.ToUpper()}_FREE";
+                string proRoleCode = $"{planMessage.Product.Name.ToUpper()}_PRO";
                 User user = this.UserRepository.FindOneByEmail(planMessage.Customer.Email);
-                Tenant tenant = this.TenantRepository.FindOneByName("fewbox.com");
+                Tenant tenant = this.TenantRepository.FindOneByName(planMessage.Customer.Email);
+                if (tenant == null)
+                {
+                    tenant = new Tenant { Name = planMessage.Customer.Email };
+                    this.TenantRepository.Save(tenant);
+                }
                 if (user == null)
                 {
                     user = new User();
@@ -47,13 +53,13 @@ namespace FewBox.Service.Auth.Domain
                     user.TenantId = tenant.Id;
                     string password = this.GenerateRandomPassword();
                     Guid userId = this.UserRepository.SaveWithMD5Password(user, password);
-                    this.MailService.SendOpsNotification("Getting Start", $"Wellcome to join us, your password is: {password}", new List<string> { planMessage.Customer.Email });
+                    this.MailService.SendOpsNotification("Getting Start", $"Wellcome to join us, your password is: {password}. You can bind your other account", new List<string> { planMessage.Customer.Email });
                 }
-                Role proRole = this.RoleRepository.FindOneByCode($"{planMessage.Product.Name.ToUpper()}PRO");
+                Role proRole = this.RoleRepository.FindOneByCode(proRoleCode);
                 Guid proRoleId;
                 if (proRole == null)
                 {
-                    proRole = new Role { Name = $"{planMessage.Product.Name}Pro", Code = $"{planMessage.Product.Name.ToUpper()}PRO" };
+                    proRole = new Role { Name = $"{planMessage.Product.Name}_Pro", Code = proRoleCode };
                     proRoleId = this.RoleRepository.Save(proRole);
                 }
                 else
@@ -72,11 +78,11 @@ namespace FewBox.Service.Auth.Domain
                         {
                             this.Principal_RoleRepository.Delete(principal_ProRole.Id);
                         }
-                        Role freeRole = this.RoleRepository.FindOneByCode($"{planMessage.Product.Name.ToUpper()}FREE");
+                        Role freeRole = this.RoleRepository.FindOneByCode(freeRoleCode);
                         Guid freeRoleId;
                         if (freeRole == null)
                         {
-                            freeRole = new Role { Name = $"{planMessage.Product.Name}Pro", Code = $"{planMessage.Product.Name.ToUpper()}PRO" };
+                            freeRole = new Role { Name = $"{planMessage.Product.Name}_Free", Code = freeRoleCode };
                             freeRoleId = this.RoleRepository.Save(freeRole);
                         }
                         else

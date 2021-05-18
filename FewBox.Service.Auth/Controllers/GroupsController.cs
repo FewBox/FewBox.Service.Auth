@@ -9,11 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using FewBox.Core.Web.Token;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
-    [Authorize(Policy="JWTPayload_ControllerAction")]
+    [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class GroupsController : ResourcesController<IGroupRepository, Group, GroupDto, GroupPersistantDto>
     {
         private IPrincipalRepository PrincipalRepository { get; set; }
@@ -24,7 +25,7 @@ namespace FewBox.Service.Auth.Controllers
 
         public GroupsController(IGroupRepository groupRepository, IPrincipalRepository principalRepository,
             IPrincipal_RoleRepository principal_RoleRepository, IGroup_UserRepository group_UserRepository,
-            IRoleRepository roleRepository, IUserRepository userRepository, IMapper mapper) : base(groupRepository, mapper)
+            IRoleRepository roleRepository, IUserRepository userRepository, ITokenService tokenService, IMapper mapper) : base(groupRepository, tokenService, mapper)
         {
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
@@ -44,7 +45,7 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost]
         [Transaction]
-        public override PayloadResponseDto<Guid> Post([FromBody]GroupPersistantDto groupDto)
+        public override PayloadResponseDto<Guid> Post([FromBody] GroupPersistantDto groupDto)
         {
             var principal = this.Mapper.Map<GroupPersistantDto, Principal>(groupDto);
             principal.PrincipalType = PrincipalType.Group;
@@ -63,14 +64,15 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<Guid> {
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = groupId
             };
         }
 
         [HttpPut("{id}")]
         [Transaction]
-        public override PayloadResponseDto<int> Put(Guid id, [FromBody]GroupPersistantDto groupDto)
+        public override PayloadResponseDto<int> Put(Guid id, [FromBody] GroupPersistantDto groupDto)
         {
             int effect;
             var group = this.Mapper.Map<GroupPersistantDto, Group>(groupDto);
@@ -90,7 +92,8 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = effect
             };
         }
@@ -101,7 +104,8 @@ namespace FewBox.Service.Auth.Controllers
         {
             var updateGroup = this.Repository.FindOne(id);
             this.PrincipalRepository.Recycle(updateGroup.PrincipalId);
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = this.Repository.Recycle(id)
             };
         }
@@ -111,15 +115,16 @@ namespace FewBox.Service.Auth.Controllers
         public PayloadResponseDto<Guid> AddUser(Guid id, Guid userId)
         {
             Guid newId = Guid.Empty;
-            if(!this.Group_UserRepository.IsExist(id, userId)&&
-            this.Repository.IsExist(id)&&
+            if (!this.Group_UserRepository.IsExist(id, userId) &&
+            this.Repository.IsExist(id) &&
             this.UserRepository.IsExist(userId))
             {
-                var group_User = new Group_User{ GroupId=id, UserId=userId };
+                var group_User = new Group_User { GroupId = id, UserId = userId };
                 group_User.Id = id;
                 newId = this.Group_UserRepository.Save(group_User);
             }
-            return new PayloadResponseDto<Guid>{
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = newId
             };
         }
@@ -130,18 +135,19 @@ namespace FewBox.Service.Auth.Controllers
         {
             Guid newId = Guid.Empty;
             var group = this.Repository.FindOne(id);
-            if(!this.Principal_RoleRepository.IsExist(group.PrincipalId, roleId)&&
-            this.Repository.IsExist(id)&&
+            if (!this.Principal_RoleRepository.IsExist(group.PrincipalId, roleId) &&
+            this.Repository.IsExist(id) &&
             this.RoleRepository.IsExist(roleId))
             {
                 var principal_Role = new Principal_Role { PrincipalId = group.PrincipalId, RoleId = roleId };
                 newId = this.Principal_RoleRepository.Save(principal_Role);
             }
-            return new PayloadResponseDto<Guid>{
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = newId
             };
         }
-        
+
         [HttpGet("{id}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> GetRoles(Guid id)
         {

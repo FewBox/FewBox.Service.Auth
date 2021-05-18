@@ -10,11 +10,12 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using FewBox.Core.Web.Controller;
+using FewBox.Core.Web.Token;
 
 namespace FewBox.Service.Auth.Controllers
 {
     [Route("api/v{v:apiVersion}/[controller]")]
-    [Authorize(Policy="JWTPayload_ControllerAction")]
+    [Authorize(Policy = "JWTPayload_ControllerAction")]
     public class ModulesController : ResourcesController<IModuleRepository, Module, ModuleDto, ModulePersistantDto>
     {
         private ISecurityObjectRepository SecurityObjectRepository { get; set; }
@@ -24,7 +25,7 @@ namespace FewBox.Service.Auth.Controllers
 
         public ModulesController(IModuleRepository moduleRepository, ISecurityObjectRepository securityObjectRepository,
         IModuleService moduleService, IRole_SecurityObjectRepository role_SecurityObjectRepository,
-        IRoleRepository roleRepository, IMapper mapper) : base(moduleRepository, mapper)
+        IRoleRepository roleRepository, ITokenService tokenService, IMapper mapper) : base(moduleRepository, tokenService, mapper)
         {
             this.SecurityObjectRepository = securityObjectRepository;
             this.ModuleService = moduleService;
@@ -50,7 +51,7 @@ namespace FewBox.Service.Auth.Controllers
 
         [HttpPost]
         [Transaction]
-        public override PayloadResponseDto<Guid> Post([FromBody]ModulePersistantDto moduleDto)
+        public override PayloadResponseDto<Guid> Post([FromBody] ModulePersistantDto moduleDto)
         {
             var securityObject = this.Mapper.Map<ModulePersistantDto, SecurityObject>(moduleDto);
             Guid securityObjectId = this.SecurityObjectRepository.Save(securityObject);
@@ -68,14 +69,15 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<Guid> {
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = moduleId
             };
         }
 
         [HttpPut("{id}")]
         [Transaction]
-        public override PayloadResponseDto<int> Put(Guid id, [FromBody]ModulePersistantDto moduleDto)
+        public override PayloadResponseDto<int> Put(Guid id, [FromBody] ModulePersistantDto moduleDto)
         {
             int effect;
             var module = this.Mapper.Map<ModulePersistantDto, Module>(moduleDto);
@@ -97,7 +99,8 @@ namespace FewBox.Service.Auth.Controllers
                     });
                 }
             }
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = effect
             };
         }
@@ -108,7 +111,8 @@ namespace FewBox.Service.Auth.Controllers
         {
             var updateModule = this.Repository.FindOne(id);
             this.SecurityObjectRepository.Recycle(updateModule.SecurityObjectId);
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = this.Repository.Recycle(id)
             };
         }
@@ -119,14 +123,15 @@ namespace FewBox.Service.Auth.Controllers
         {
             Guid newId = Guid.Empty;
             var module = this.Repository.FindOne(id);
-            if(!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId)&&
-            this.Repository.IsExist(id)&&
+            if (!this.Role_SecurityObjectRepository.IsExist(roleId, module.SecurityObjectId) &&
+            this.Repository.IsExist(id) &&
             this.RoleRepository.IsExist(roleId))
             {
                 var role_SecurityObject = new Role_SecurityObject { RoleId = roleId, SecurityObjectId = module.SecurityObjectId };
                 newId = this.Role_SecurityObjectRepository.Save(role_SecurityObject);
             }
-            return new PayloadResponseDto<Guid>{
+            return new PayloadResponseDto<Guid>
+            {
                 Payload = newId
             };
         }
@@ -138,18 +143,19 @@ namespace FewBox.Service.Auth.Controllers
             int effect = 0;
             var module = this.Repository.FindOne(id);
             var role_SecurityObject = this.Role_SecurityObjectRepository.FindOneByRoleIdAndSecurityObjectId(roleId, module.SecurityObjectId);
-            if(role_SecurityObject != null)
+            if (role_SecurityObject != null)
             {
                 effect = this.Role_SecurityObjectRepository.Delete(role_SecurityObject.Id);
             }
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = effect
             };
         }
 
         [HttpPut("batchgrantrole")]
         [Transaction]
-        public PayloadResponseDto<IList<Guid>> BatchGrantRole([FromBody]BatchGrantRoleRequestDto batchGrantRoleRequestDto)
+        public PayloadResponseDto<IList<Guid>> BatchGrantRole([FromBody] BatchGrantRoleRequestDto batchGrantRoleRequestDto)
         {
             var ids = new List<Guid>();
             if (batchGrantRoleRequestDto.Ids != null)
@@ -173,7 +179,8 @@ namespace FewBox.Service.Auth.Controllers
 
                 }
             }
-            return new PayloadResponseDto<IList<Guid>>{
+            return new PayloadResponseDto<IList<Guid>>
+            {
                 Payload = ids
             };
         }
@@ -184,16 +191,18 @@ namespace FewBox.Service.Auth.Controllers
         {
             int effect = 0;
             effect = this.Repository.UpdateParent(id, parentId);
-            return new PayloadResponseDto<int>{
+            return new PayloadResponseDto<int>
+            {
                 Payload = effect
             };
         }
-        
+
         [HttpGet("seek/{moduleKey}/roles")]
         public PayloadResponseDto<IEnumerable<RoleDto>> Get(string moduleKey)
         {
             var module = this.Repository.FindOneByCode(moduleKey);
-            return new PayloadResponseDto<IEnumerable<RoleDto>>{
+            return new PayloadResponseDto<IEnumerable<RoleDto>>
+            {
                 Payload = this.Mapper.Map<IEnumerable<Role>, IEnumerable<RoleDto>>(this.RoleRepository.FindAllByModuleId(module.Id))
             };
         }
