@@ -1,7 +1,7 @@
 {
   "service": "Shipping",
   "roleName": "Shipping Admin",
-  "roleCode": "R_Shipping_SERVICEADMIN",
+  "roleCode": "R_SHIPPING_SERVICEADMIN",
   "usernames": [
     "fewbox"
   ],

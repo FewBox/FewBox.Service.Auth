@@ -264,7 +264,7 @@ namespace FewBox.Service.Auth.Controllers
             }
             Guid roleId;
             string roleName = $"{userRegistryRequestDto.ProductName}_Free";
-            string roleCode = $"{userRegistryRequestDto.ProductName.ToUpper()}_FREE";
+            string roleCode = $"R_{userRegistryRequestDto.ProductName.ToUpper()}_FREE";
             if (this.RoleRepository.IsExist(roleName, roleCode))
             {
                 roleId = this.RoleRepository.FindOneByNameAndCode(roleName, roleCode).Id;

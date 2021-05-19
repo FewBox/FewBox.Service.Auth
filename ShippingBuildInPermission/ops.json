@@ -1,7 +1,7 @@
 {
   "service": "Shipping",
   "roleName": "Ops",
-  "roleCode": "R_Shipping_SERVICEOPS",
+  "roleCode": "R_SHIPPING_SERVICEOPS",
   "usernames": [
     "fewbox_ops"
   ],

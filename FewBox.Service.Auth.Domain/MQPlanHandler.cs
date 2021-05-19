@@ -34,8 +34,8 @@ namespace FewBox.Service.Auth.Domain
         {
             return (planMessage) =>
             {
-                string freeRoleCode = $"{planMessage.Product.Name.ToUpper()}_FREE";
-                string proRoleCode = $"{planMessage.Product.Name.ToUpper()}_PRO";
+                string freeRoleCode = $"R_{planMessage.Product.Name.ToUpper()}_FREE";
+                string proRoleCode = $"R_{planMessage.Product.Name.ToUpper()}_PRO";
                 User user = this.UserRepository.FindOneByEmail(planMessage.Customer.Email);
                 Tenant tenant = this.TenantRepository.FindOneByName(planMessage.Customer.Email);
                 if (tenant == null)

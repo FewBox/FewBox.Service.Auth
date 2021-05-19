@@ -117,7 +117,7 @@ namespace FewBox.Service.Auth.Controllers
                 Guid serviceId = this.InitService(productName, productName);
                 // Role
                 string roleName = $"{productName}_Admin";
-                string roleCode = $"{productName}_ADMIN";
+                string roleCode = $"R_{productName.ToUpper()}_ADMIN";
                 Guid roleId = this.InitRole(roleName, roleCode);
                 // Tenant
                 string tenantName = initProductAdminDto.Email.Split('@')[1];
@@ -173,9 +173,9 @@ namespace FewBox.Service.Auth.Controllers
             Guid serviceId = this.InitService(initProductRoleDto.ProductName, initProductRoleDto.ProductName);
             // Role
             string freeRoleName = $"{initProductRoleDto.ProductName}_Free";
-            string freeRoleCode = $"{initProductRoleDto.ProductName}_FREE";
+            string freeRoleCode = $"R_{initProductRoleDto.ProductName.ToUpper()}_FREE";
             string proRoleName = $"{initProductRoleDto.ProductName}_Pro";
-            string proRoleCode = $"{initProductRoleDto.ProductName}_PRO";
+            string proRoleCode = $"R_{initProductRoleDto.ProductName.ToUpper()}_PRO";
             Guid freeRoleId = this.InitRole(freeRoleName, freeRoleCode);
             Guid proRoleId = this.InitRole(proRoleName, proRoleCode);
             // Api
