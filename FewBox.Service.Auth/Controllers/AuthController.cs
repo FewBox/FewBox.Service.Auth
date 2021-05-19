@@ -221,9 +221,9 @@ namespace FewBox.Service.Auth.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("userregister")]
+        [HttpPost("signup")]
         [Transaction]
-        public PayloadResponseDto<Guid> UserRegister([FromBody] UserRegistryRequestDto userRegistryRequestDto)
+        public PayloadResponseDto<Guid> Signup([FromBody] UserRegistryRequestDto userRegistryRequestDto)
         {
             // Todo
             /*if (userRegistryRequestDto.ValidateCode != "sfewwRfsfs8462")
