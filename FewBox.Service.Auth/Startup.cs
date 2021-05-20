@@ -45,7 +45,7 @@ namespace FewBox.Service.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddFewBox(this.ApiVersionDocuments, FewBoxDBType.MySQL, FewBoxAuthType.Payload);
-            services.AddFewBoxSDK(FewBoxIntegrationType.MessageQueue, FewBoxListenerHostType.Web, FewBoxListenerType.Plan);
+            services.AddFewBoxSDK(FewBoxIntegrationType.MessageQueue, FewBoxListenerHostType.Web, FewBoxListenerType.Plan );
             // Config
             var authConfig = this.Configuration.GetSection("AuthConfig").Get<AuthConfig>();
             services.AddSingleton(authConfig);

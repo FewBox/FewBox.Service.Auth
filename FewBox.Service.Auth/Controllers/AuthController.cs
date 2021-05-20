@@ -15,6 +15,8 @@ using FewBox.Service.Auth.Model.Entities;
 using FewBox.Core.Web.Filter;
 using FewBox.Core.Web.Controller;
 using AutoMapper;
+using FewBox.SDK.Mail;
+using System.Web;
 
 namespace FewBox.Service.Auth.Controllers
 {
@@ -32,12 +34,13 @@ namespace FewBox.Service.Auth.Controllers
         private IPrincipalRepository PrincipalRepository { get; set; }
         private IPrincipal_RoleRepository Principal_RoleRepository { get; set; }
         private IServiceRepository ServiceRepository { get; set; }
+        private IMailService MailService { get; set; }
         private FewBoxConfig FewBoxConfig { get; set; }
         private AuthConfig AuthConfig { get; set; }
 
         public AuthController(IUserRepository userRepository, IRoleRepository roleRepository, IModuleRepository moduleRepository, IApiRepository apiRepository,
         IRole_SecurityObjectRepository role_SecurityObjectRepository, ITenantRepository tenantRepository, IPrincipalRepository principalRepository,
-        IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository, FewBoxConfig fewBoxConfig,
+        IPrincipal_RoleRepository principal_RoleRepository, IServiceRepository serviceRepository, IMailService mailService, FewBoxConfig fewBoxConfig,
         AuthConfig authConfig, ITokenService tokenService, IMapper mapper) : base(mapper, tokenService)
         {
             this.UserRepository = userRepository;
@@ -49,8 +52,45 @@ namespace FewBox.Service.Auth.Controllers
             this.PrincipalRepository = principalRepository;
             this.Principal_RoleRepository = principal_RoleRepository;
             this.ServiceRepository = serviceRepository;
+            this.MailService = mailService;
             this.FewBoxConfig = fewBoxConfig;
             this.AuthConfig = authConfig;
+        }
+
+        [AllowAnonymous]
+        [HttpPost("forgotpassword")]
+        public MetaResponseDto ForgotPassword([FromBody] ForgotPasswordRequestDto forgotPasswordRequestDto)
+        {
+            bool isSuccessful = false;
+            if (this.UserRepository.IsExist(forgotPasswordRequestDto.Email))
+            {
+                var user = this.UserRepository.FindOneByEmail(forgotPasswordRequestDto.Email);
+                var principal = this.PrincipalRepository.FindOne(user.PrincipalId);
+                if (principal.Name == forgotPasswordRequestDto.Username)
+                {
+                    var userProfile = new UserProfile
+                    {
+                        Id = user.Id.ToString(),
+                        Key = this.FewBoxConfig.JWT.Key,
+                        Issuer = this.FewBoxConfig.JWT.Issuer,
+                        Audience = this.FewBoxConfig.JWT.Audience,
+                        Roles = new List<string> { "FEWBOX.SERVICE.LOWCODE.LINK_TEMPORARY" },
+                        Apis = new List<string> { "FewBox.Service.Auth/Auth/ResetSelfPassword" }
+                    };
+                    string temporaryToken = this.TokenService.GenerateToken(userProfile, DateTime.Now.AddMinutes(5));
+                    string url = $"{forgotPasswordRequestDto.ResetUrl}/{HttpUtility.UrlEncode(temporaryToken)}".Replace('.', '_');
+                    this.MailService.SendOpsNotification("Reset your password", $"Click <a href='{url}'>Here</a> to reset password!", new List<string> { forgotPasswordRequestDto.Email });
+                    isSuccessful = true;
+                }
+            }
+            return new MetaResponseDto { IsSuccessful = isSuccessful };
+        }
+
+        [HttpPost("resetselfpassword")]
+        public MetaResponseDto ResetSelfPassword([FromBody] ResetSelfPasswordRequestDto resetSelfPasswordRequestDto)
+        {
+            this.UserRepository.ResetPassword(this.GetUserId(), resetSelfPasswordRequestDto.Password);
+            return new MetaResponseDto { };
         }
 
         [AllowAnonymous]
@@ -89,13 +129,14 @@ namespace FewBox.Service.Auth.Controllers
                 }
                 else
                 {
-                    Role role = this.RoleRepository.FindOneByCode("TENANT");
-                    var tenant = new Tenant { Name = $"google-{validPayload.Subject}" };
+                    Role role = this.RoleRepository.FindOneByCode($"R_{signinGoogleRequestDto.ProductName.ToUpper()}_FREE");
+                    var tenant = new Tenant { Name = validPayload.Email };
                     Guid tenantId = this.TenantRepository.Save(tenant);
                     Principal principal = new Principal { Name = validPayload.Name };
                     Guid principalId = this.PrincipalRepository.Save(principal);
                     userId = this.UserRepository.SaveGoogleAccount(tenantId, principalId, validPayload.Subject, validPayload.Email);
                     this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = role.Id });
+                    this.MailService.SendOpsNotification("Getting Start", $"Wellcome to join us!", new List<string> { validPayload.Email });
                 }
                 var userProfile = new UserProfile
                 {
@@ -289,6 +330,7 @@ namespace FewBox.Service.Auth.Controllers
             user.TenantId = tenantId;
             Guid userId = this.UserRepository.SaveWithMD5Password(user, userRegistryRequestDto.Password);
             this.Principal_RoleRepository.Save(new Principal_Role { PrincipalId = principalId, RoleId = roleId });
+            this.MailService.SendOpsNotification("Getting Start", $"Wellcome to join us!", new List<string> { userRegistryRequestDto.Email });
             return new PayloadResponseDto<Guid>
             {
                 Payload = userId
