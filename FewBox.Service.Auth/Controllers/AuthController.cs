@@ -285,6 +285,42 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "Product name is not exist."
                 };
             }
+            if (String.IsNullOrEmpty(userRegistryRequestDto.Email))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "EMAIL_NOT_EXIST",
+                    ErrorMessage = "Email is not exist."
+                };
+            }
+            if (String.IsNullOrEmpty(userRegistryRequestDto.Name))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "Name_NOT_EXIST",
+                    ErrorMessage = "Name is not exist."
+                };
+            }
+            if (String.IsNullOrEmpty(userRegistryRequestDto.Password))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "PASSWORD_NOT_EXIST",
+                    ErrorMessage = "Password is not exist."
+                };
+            }
+            if (String.IsNullOrEmpty(userRegistryRequestDto.ProductName))
+            {
+                return new PayloadResponseDto<Guid>
+                {
+                    IsSuccessful = false,
+                    ErrorCode = "PRODUCTNAME_NOT_EXIST",
+                    ErrorMessage = "Product name is not exist."
+                };
+            }
             if (!(String.IsNullOrEmpty(userRegistryRequestDto.Email)) && this.TenantRepository.IsExist(userRegistryRequestDto.Email))
             {
                 return new PayloadResponseDto<Guid>
@@ -323,6 +359,7 @@ namespace FewBox.Service.Auth.Controllers
             Guid tenantId = this.TenantRepository.Save(tenant);
             var principal = this.Mapper.Map<UserRegistryRequestDto, Principal>(userRegistryRequestDto);
             principal.PrincipalType = PrincipalType.User;
+            principal.Name = userRegistryRequestDto.Name;
             Guid principalId = this.PrincipalRepository.Save(principal);
             var user = this.Mapper.Map<UserRegistryRequestDto, User>(userRegistryRequestDto);
             user.Type = UserType.Form;
