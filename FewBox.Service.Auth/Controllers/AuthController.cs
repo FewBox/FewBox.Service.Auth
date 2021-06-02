@@ -294,7 +294,7 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "Email is not exist."
                 };
             }
-            if (String.IsNullOrEmpty(userRegistryRequestDto.Name))
+            if (String.IsNullOrEmpty(userRegistryRequestDto.Username))
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -321,7 +321,7 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "Product name is not exist."
                 };
             }
-            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Email)) && this.TenantRepository.IsExist(userRegistryRequestDto.Email))
+            if (this.TenantRepository.IsExist(userRegistryRequestDto.Email))
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -330,7 +330,7 @@ namespace FewBox.Service.Auth.Controllers
                     ErrorMessage = "Tenant is exist."
                 };
             }
-            if (!(String.IsNullOrEmpty(userRegistryRequestDto.Name)) && this.PrincipalRepository.IsExist(userRegistryRequestDto.Name))
+            if (this.PrincipalRepository.IsExist(userRegistryRequestDto.Username))
             {
                 return new PayloadResponseDto<Guid>
                 {
@@ -359,7 +359,7 @@ namespace FewBox.Service.Auth.Controllers
             Guid tenantId = this.TenantRepository.Save(tenant);
             var principal = this.Mapper.Map<UserRegistryRequestDto, Principal>(userRegistryRequestDto);
             principal.PrincipalType = PrincipalType.User;
-            principal.Name = userRegistryRequestDto.Name;
+            principal.Name = userRegistryRequestDto.Username;
             Guid principalId = this.PrincipalRepository.Save(principal);
             var user = this.Mapper.Map<UserRegistryRequestDto, User>(userRegistryRequestDto);
             user.Type = UserType.Form;
