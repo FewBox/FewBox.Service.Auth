@@ -78,7 +78,7 @@ namespace FewBox.Service.Auth.Controllers
                         Apis = new List<string> { "FewBox.Service.Auth/Auth/ResetSelfPassword" }
                     };
                     string temporaryToken = this.TokenService.GenerateToken(userProfile, DateTime.Now.AddMinutes(5));
-                    string url = $"{forgotPasswordRequestDto.ResetUrl}/{HttpUtility.UrlEncode(temporaryToken).Replace('.', '_')}";
+                    string url = $"{forgotPasswordRequestDto.ResetUrl}/{HttpUtility.UrlEncode(temporaryToken).Replace('.', '$')}";
                     this.MailService.SendOpsNotification("Reset your password", $"Click <a href='{url}'>Here</a> to reset password!", new List<string> { forgotPasswordRequestDto.Email });
                     isSuccessful = true;
                 }
